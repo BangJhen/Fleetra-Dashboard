@@ -174,36 +174,79 @@ export function createSeed(): FleetState {
       location: p.address,
     };
   });
-  const trips = Array.from({ length: 10 }, (_, i) => {
-    const status = i < 5 ? "in_progress" : i < 8 ? "assigned" : "completed";
-    const start = new Date(base.getTime() + i * 60000).toISOString();
+  const trips = Array.from({ length: 118 }, (_, i) => {
+    const status =
+      i < 88 ? "in_progress" : i < 94 ? "assigned" : "completed";
+    const start = new Date(
+      base.getTime() + (status === "completed" ? -(14400000 - (i - 94) * 300000) : i * 60000),
+    ).toISOString();
+    const end =
+      status === "completed"
+        ? new Date(base.getTime() - 3600000 + (i - 94) * 120000).toISOString()
+        : undefined;
+
+    // Pick 3 to 5 realistic locations from the 20 Bandung Raya logistic locations
+    // Trip 0 (v1, d1) has exactly 5 stops (2 delivered, 3 pending) for mobile event and ledger test parity
+    const stopCount = i === 0 ? 5 : 3 + (i % 3);
+    const stopIndices =
+      i === 0
+        ? [0, 1, 2, 3, 4]
+        : Array.from(
+            { length: stopCount },
+            (_, sIdx) => (i * 3 + sIdx * 5) % locations.length,
+          );
+
+    const vehicleId =
+      i < 88
+        ? `v${i + 1}`
+        : i < 94
+          ? `v${i + 1}`
+          : `v${95 + ((i - 94) % 26)}`;
+
+    const driverId =
+      i < 88
+        ? `d${i + 1}`
+        : i < 94
+          ? `d${i + 1}`
+          : `d${95 + ((i - 94) % 48)}`;
+
     return {
       id: `trip-${89 + i}`,
-      code: `TRIP-2026-${String(89 + i).padStart(3, "0")}`,
-      vehicleId: `v${i + 1}`,
-      driverId: `d${i + 1}`,
+      code: `TRIP-2026-${String(i + 1).padStart(3, "0")}`,
+      vehicleId,
+      driverId,
       status: status as "in_progress" | "assigned" | "completed",
-      stops: [0, 1, 2, 3, 4].map(
-        (n) =>
-          ({
-            ...locations[n],
-            id: `stop-${i}-${n}`,
-            type: n === 0 ? "pickup" : "dropoff",
-            status: n === 0 || (i < 5 && n === 1) ? "delivered" : "pending",
-          }) as Stop,
-      ),
+      stops: stopIndices.map((locIdx, sIdx) => {
+        let stopStatus: "pending" | "delivered" = "pending";
+        if (status === "completed") {
+          stopStatus = "delivered";
+        } else if (status === "in_progress") {
+          // In-progress: pickup and early dropoffs delivered
+          stopStatus =
+            i === 0
+              ? sIdx <= 1
+                ? "delivered"
+                : "pending"
+              : sIdx === 0 || (i % 2 === 0 ? sIdx <= 1 : sIdx === 0)
+                ? "delivered"
+                : "pending";
+        }
+        return {
+          ...locations[locIdx],
+          id: `stop-${i}-${sIdx}`,
+          type: sIdx === 0 ? "pickup" : "dropoff",
+          status: stopStatus,
+        } as Stop;
+      }),
       createdAt: start,
       startedAt: status !== "assigned" ? start : undefined,
-      completedAt:
-        status === "completed"
-          ? new Date(base.getTime() + 7200000).toISOString()
-          : undefined,
-      distance: 32.4 + i * 2.3,
-      duration: 78 + i * 3,
+      completedAt: end,
+      distance: Number((24.5 + ((i * 3.7) % 36)).toFixed(1)),
+      duration: 55 + ((i * 7) % 85),
       key: `seed-${i}`,
     };
   });
-  // Completed seed trips intentionally have no fabricated proof assets.
+  // Completed seed trips have all stops delivered
   for (const t of trips.filter((t) => t.status === "completed"))
     t.stops.forEach((s) => (s.status = "delivered"));
   const state: FleetState = {
@@ -260,7 +303,7 @@ export function createSeed(): FleetState {
         id: "n2",
         title: "Penugasan Bandung Kota berjalan",
         description:
-          "Budi Santoso menjalankan TRIP-2026-089. Dua dari lima titik telah selesai.",
+          "Budi Santoso menjalankan TRIP-2026-001. Dua dari empat titik telah selesai.",
         kind: "trip",
         href: "/dashboard/dispatch/trip-89",
         at: base.toISOString(),
