@@ -12,7 +12,7 @@ Status 1 November 2026.
 
 ## Kondisi aktual
 
-Data masih disimpan pada file JSON lokal dengan antrean satu proses Node. Belum ada driver MySQL, schema SQL, migrasi data atau pengujian terhadap server MySQL. Akun demo terbuka tetap tersedia. Akun terdaftar mendukung login email dan kata sandi dengan hash scrypt serta profil per akun. Data armada masih berada dalam workspace prototipe bersama; konfigurasi demo harus ditinjau sebelum menyimpan data produksi atau mempublikasikan akses operasional.
+Data masih disimpan pada file JSON lokal dengan antrean satu proses Node. Rancangan skema SQL tersedia di [`database/README.md`](../database/README.md), tetapi belum ada driver MySQL, migrasi data JSON, atau pengujian pada server MySQL. Akun demo terbuka tetap tersedia. Akun terdaftar mendukung login email dan kata sandi dengan hash scrypt serta profil per akun. Data armada masih berada dalam workspace prototipe bersama; konfigurasi demo harus ditinjau sebelum menyimpan data produksi atau mempublikasikan akses operasional.
 
 ## Pilihan MySQL
 
