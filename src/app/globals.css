@@ -2251,6 +2251,37 @@
   color: #64748b;
   margin-top: 5px;
 }
+.profile-surface { overflow: hidden; }
+.profile-surface .settings-profile {
+  padding: 28px 32px;
+  background: #f1f6fd;
+  border-bottom: 1px solid #e2e8f0;
+}
+.profile-surface .settings-profile > .avatar {
+  width: 56px;
+  height: 56px;
+  background: #dbeafe;
+  color: #2463d8;
+  font-size: 16px;
+}
+.profile-surface .settings-profile h3 { font-size: 16px; }
+.profile-role { margin-left: auto; color: #36629c; font-size: 12px; font-weight: 600; }
+.profile-sections { display: grid; grid-template-columns: 1fr 1fr; }
+.profile-section { padding: 30px 32px; min-width: 0; }
+.profile-section + .profile-section { border-left: 1px solid #e2e8f0; }
+.profile-section h2 { font-size: 15px; margin-bottom: 12px; }
+.profile-details > div { display: flex; justify-content: space-between; gap: 20px; padding: 16px 0; border-bottom: 1px solid #edf1f6; }
+.profile-details dt { color: #64748b; font-size: 12px; }
+.profile-details dd { color: #1e293b; font-size: 12px; font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+.profile-actions { padding: 0 32px 30px; }
+@media (max-width: 700px) {
+  .profile-surface .settings-profile { padding: 22px; flex-wrap: wrap; }
+  .profile-role { width: 100%; margin-left: 69px; }
+  .profile-sections { grid-template-columns: 1fr; }
+  .profile-section { padding: 24px 22px; }
+  .profile-section + .profile-section { border-left: 0; border-top: 1px solid #e2e8f0; }
+  .profile-actions { padding: 0 22px 24px; }
+}
 .settings-panel > .review-details {
   padding: 0 26px;
 }

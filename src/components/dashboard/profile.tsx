@@ -151,19 +151,19 @@ export function Profile() {
       >
         <Button onClick={() => setEditing(true)}>Edit profil</Button>
       </PageHeading>
-      <section className="content-panel settings-panel">
-        <div className="section-heading">
-          <h2>Identitas operator</h2>
-          <span className="safety-source-tag">Fleet Manager</span>
-        </div>
+      <section className="content-panel profile-surface">
         <div className="settings-profile">
           <Initials name={profile.name} />
           <div>
             <h3>{profile.name}</h3>
             <p>{profile.email}</p>
           </div>
+          <span className="profile-role">Fleet Manager</span>
         </div>
-        <dl className="review-details">
+        <div className="profile-sections">
+        <section className="profile-section">
+          <h2>Informasi kontak</h2>
+          <dl className="profile-details">
           <div>
             <dt>Nama lengkap</dt>
             <dd>{profile.name}</dd>
@@ -176,10 +176,11 @@ export function Profile() {
             <dt>Nomor telepon</dt>
             <dd>{profile.phone || "Belum diisi"}</dd>
           </div>
-          <div>
-            <dt>Peran akses</dt>
-            <dd>Fleet Manager</dd>
-          </div>
+          </dl>
+        </section>
+        <section className="profile-section">
+          <h2>Ruang kerja</h2>
+          <dl className="profile-details">
           <div>
             <dt>Workspace</dt>
             <dd>FLEETRA Operations</dd>
@@ -192,11 +193,13 @@ export function Profile() {
             <dt>Zona waktu</dt>
             <dd>Waktu Indonesia Barat</dd>
           </div>
-        </dl>
-        <Button variant="outline" disabled={busy} onClick={logout}>
+          </dl>
+        </section>
+        </div>
+        <div className="profile-actions"><Button variant="outline" disabled={busy} onClick={logout}>
           <Icon name="logout" />
           {busy ? "Keluar dari workspace" : "Keluar dari akun"}
-        </Button>
+        </Button></div>
       </section>
       {editing && (
         <ProfileEditor profile={profile} onClose={() => setEditing(false)} />
