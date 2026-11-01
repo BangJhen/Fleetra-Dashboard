@@ -4567,14 +4567,23 @@
 }
 .vehicle-table-details {
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 3px;
   font-size: 10px;
   line-height: 1.6;
   color: #64748b;
 }
-.vehicle-table-details > .vehicle-type-label { margin-top: 0; }
+.vehicle-table-details > .vehicle-type-label {
+  margin-top: 0;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #eaf3ff;
+  color: #245bb8;
+  line-height: 1.4;
+  white-space: nowrap;
+}
 .vehicle-management-panel [data-slot="table-cell"] {
   padding-top: 12px;
   padding-bottom: 12px;

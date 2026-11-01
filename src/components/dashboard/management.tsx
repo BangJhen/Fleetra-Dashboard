@@ -128,7 +128,7 @@ export function Management({ kind }: { kind: "vehicles" | "drivers" }) {
                             <strong>{v.plate}</strong>
                             <div className="vehicle-table-details">
                               <span>{v.model}</span>
-                              <small className="vehicle-type-label">{vehicleTypeLabels[vehicleType(v)]}</small>
+                              <small className="vehicle-type-label">Jenis {vehicleTypeLabels[vehicleType(v)]}</small>
                             </div>
                           </div>
                         </div>
