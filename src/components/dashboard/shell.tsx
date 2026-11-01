@@ -17,12 +17,12 @@ import { defaultOperatorProfile } from "@/lib/operator-profile";
 const nav: { label: string; href: string; icon: IconName; sub?: boolean }[] = [
   { label: "Live tracking", href: "/dashboard", icon: "tracking" },
   {
-    label: "Dispatch dan trips",
+    label: "Penugasan",
     href: "/dashboard/dispatch",
     icon: "dispatch",
   },
-  { label: "Health dan safety", href: "/dashboard/safety", icon: "safety" },
-  { label: "RTO dan ekuitas", href: "/dashboard/finance/rto", icon: "finance" },
+  { label: "Keselamatan armada", href: "/dashboard/safety", icon: "safety" },
+  { label: "Ekuitas RTO", href: "/dashboard/finance/rto", icon: "finance" },
   {
     label: "Rekonsiliasi ETLE",
     href: "/dashboard/finance/etle",

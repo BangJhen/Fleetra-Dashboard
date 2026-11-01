@@ -44,7 +44,7 @@ export function Dispatch() {
   return (
     <div className="page">
       <PageHeading
-        title="Dispatch dan trips"
+        title="Penugasan"
         description="Rencanakan penugasan dan ikuti progres setiap pengantaran."
       >
         <Button asChild>

@@ -44,7 +44,7 @@ test("fleet search, filter and inspector share the same vehicle data", async ({
 test("multi-stop dispatch persists through refresh and rejects duplicate allocation", async ({
   page,
 }) => {
-  await page.getByRole("link", { name: "Dispatch dan trips" }).click();
+  await page.getByRole("navigation", { name: "Navigasi utama" }).getByRole("link", { name: "Penugasan" }).click();
   await page.getByRole("link", { name: "Buat penugasan" }).click();
   await page
     .getByLabel("Kendaraan", { exact: true })
@@ -112,8 +112,8 @@ test("finance, health, management, notifications and logout are reachable", asyn
   page,
 }) => {
   for (const [link, title] of [
-    ["Health dan safety", "Health dan safety"],
-    ["RTO dan ekuitas", "RTO dan ekuitas"],
+    ["Keselamatan armada", "Keselamatan armada"],
+    ["Ekuitas RTO", "Ekuitas RTO"],
     ["Data armada", "Data armada"],
     ["Data pengemudi", "Data pengemudi"],
   ]) {
@@ -160,9 +160,9 @@ test("mobile layout has no horizontal page overflow and navigation works", async
     fullPage: true,
   });
   await page.getByRole("button", { name: "Buka navigasi" }).click();
-  await page.getByRole("link", { name: "Dispatch dan trips" }).click();
+  await page.getByRole("navigation", { name: "Navigasi utama" }).getByRole("link", { name: "Penugasan" }).click();
   await expect(
-    page.getByRole("heading", { name: "Dispatch dan trips", exact: true }),
+    page.getByRole("heading", { name: "Penugasan", exact: true }),
   ).toBeVisible();
   expect(
     await page.evaluate(

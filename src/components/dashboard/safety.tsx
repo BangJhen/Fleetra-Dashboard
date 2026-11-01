@@ -45,7 +45,7 @@ export function Safety() {
   return (
     <div className="page safety-overview-page">
       <PageHeading
-        title="Health dan safety"
+        title="Keselamatan armada"
         description="Kondisi armada dan keselamatan pengemudi."
       />
       <Tabs
