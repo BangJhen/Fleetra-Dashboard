@@ -47,3 +47,7 @@ test-results/
 .next-qa/
 
 !.env.example
+
+# Copied from installed MapLibre by prepare-map.mjs
+/public/maps/maplibre-gl-worker.mjs
+/public/maps/MAPLIBRE-LICENSE.txt

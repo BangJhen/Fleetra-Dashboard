@@ -15,11 +15,10 @@ import {
   PageHeading,
   Status,
   Initials,
-  DemoNote,
   time,
   EmptyState,
 } from "./common";
-import { FleetMap } from "./map-loader";
+import { TripRouteMap } from "./trip-route-map";
 import { Icon } from "./icons";
 import type { Stop } from "@/lib/types";
 export function TripDetail({ id }: { id: string }) {
@@ -92,12 +91,12 @@ export function TripDetail({ id }: { id: string }) {
                         size="sm"
                         onClick={() => setProof(s)}
                       >
-                        Lihat bukti e-POD
+                        Lihat bukti ePOD
                         <Icon name="arrow" />
                       </Button>
                     ) : (
                       <p className="proof-unavailable">
-                        Bukti e-POD belum tersedia pada seed demo.
+                        Bukti ePOD belum tersedia pada seed demo.
                       </p>
                     ))}
                 </div>
@@ -144,17 +143,7 @@ export function TripDetail({ id }: { id: string }) {
               </div>
             </dl>
           </section>
-          <div className="content-panel trip-map">
-            <FleetMap
-              points={trip.stops}
-              vehicles={vehicle ? [vehicle] : []}
-              playing={false}
-            />
-          </div>
-          <DemoNote>
-            Status berasal dari data demo tersimpan. Tidak ada pembaruan Mobile
-            yang terhubung.
-          </DemoNote>
+          <TripRouteMap trip={trip} vehicle={vehicle} />
         </div>
       </div>
       <Dialog

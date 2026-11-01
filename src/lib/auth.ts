@@ -1,34 +1,42 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { createHmac, timingSafeEqual, randomBytes } from "node:crypto";
+import { getRegisteredProfile } from "./accounts";
+const globals = globalThis as typeof globalThis & { fleetraSecret?: string };
 const secret =
   process.env.SESSION_SECRET ||
-  (globalThis as typeof globalThis & { fleetraSecret?: string })
-    .fleetraSecret ||
+  globals.fleetraSecret ||
   randomBytes(32).toString("hex");
-(globalThis as typeof globalThis & { fleetraSecret?: string }).fleetraSecret =
-  secret;
-export function makeSession() {
-  const expiry = String(Date.now() + 8 * 60 * 60 * 1000);
+globals.fleetraSecret = secret;
+export function makeSession(userId = "demo") {
+  const payload = `${userId}.${Date.now() + 8 * 60 * 60 * 1000}`;
   return (
-    expiry + "." + createHmac("sha256", secret).update(expiry).digest("hex")
+    payload + "." + createHmac("sha256", secret).update(payload).digest("hex")
   );
 }
-export async function isAuthenticated() {
+export async function sessionUserId(): Promise<string | null> {
   const token = (await cookies()).get("fleetra-session")?.value;
-  if (!token) return false;
-  const parts = token.split(".");
-  const [expires, sig] = parts;
+  if (!token) return null;
+  const [id, expiry, sig, ...extra] = token.split(".");
   if (
-    parts.length !== 2 ||
-    !/^\d{13}$/.test(expires) ||
-    !/^[a-f0-9]{64}$/.test(sig ?? "") ||
-    Number(expires) < Date.now()
+    extra.length ||
+    !id ||
+    !(id === "demo" || /^[a-f0-9-]{36}$/.test(id)) ||
+    !/^\d{13}$/.test(expiry || "") ||
+    !/^\w{64}$/.test(sig || "") ||
+    Number(expiry) < Date.now()
   )
-    return false;
-  const expected = createHmac("sha256", secret).update(expires).digest("hex");
-  return (
-    sig.length === expected.length &&
-    timingSafeEqual(Buffer.from(sig), Buffer.from(expected))
-  );
+    return null;
+  const expected = createHmac("sha256", secret)
+    .update(`${id}.${expiry}`)
+    .digest("hex");
+  if (
+    Buffer.byteLength(sig) !== Buffer.byteLength(expected) ||
+    !timingSafeEqual(Buffer.from(sig), Buffer.from(expected))
+  )
+    return null;
+  return id === "demo" || (await getRegisteredProfile(id)) ? id : null;
+}
+export async function isAuthenticated() {
+  return !!(await sessionUserId());
 }

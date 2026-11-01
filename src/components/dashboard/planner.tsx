@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ import { useFleet } from "./provider";
 import { locations } from "@/lib/seed";
 import { availableResources } from "@/lib/domain";
 import { FleetMap } from "./map-loader";
-import { BackLink, PageHeading, DemoNote } from "./common";
+import { BackLink, PageHeading } from "./common";
 import { Icon } from "./icons";
 type Optimized = {
   order: number[];
@@ -32,11 +32,17 @@ export function Planner() {
   const [stops, setStops] = useState([0, 1, 2, 3]);
   const [vehicleId, setVehicle] = useState("");
   const [driverId, setDriver] = useState("");
-  const [optimized, setOptimized] = useState<Optimized | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const requestKey = `${stops.join(",")}:${attempt}`;
+  const [routing, setRouting] = useState<{
+    key: string; status: "pending" | "ready" | "error";
+    result?: Optimized; error?: string;
+  }>({ key: "", status: "pending" });
+  const busy = routing.key !== requestKey || routing.status === "pending";
+  const optimized = routing.key === requestKey ? routing.result : undefined;
+  const error = routing.key === requestKey ? routing.error : undefined;
   const [saving, setSaving] = useState(false);
   const [review, setReview] = useState(false);
-  const [error, setError] = useState("");
   const key = useRef("");
   const resources = availableResources(data);
   const ordered = optimized?.order || stops;
@@ -45,30 +51,33 @@ export function Planner() {
   const selectedVehicle = data.vehicles.find((v) => v.id === vehicleId);
   function changeStops(next: number[]) {
     setStops(next);
-    setOptimized(null);
-    setError("");
+    setReview(false);
   }
-  async function optimize() {
-    setBusy(true);
-    setError("");
-    try {
-      const res = await fetch("/api/optimize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stops }),
-      });
-      const result = await res.json();
-      if (!res.ok) throw Error(result.error);
-      setOptimized(result);
-      toast.success("Urutan rute dihitung dengan OSRM.");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Rute gagal dihitung.");
-    } finally {
-      setBusy(false);
-    }
-  }
+  useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/optimize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ stops }),
+          signal: controller.signal,
+        });
+        const result = await res.json();
+        if (!res.ok) throw Error(result.error || "Rute gagal dihitung.");
+        if (active) setRouting({ key: requestKey, status: "ready", result });
+      } catch (e) {
+        if (active && !controller.signal.aborted) setRouting({
+          key: requestKey, status: "error",
+          error: e instanceof Error ? e.message : "Rute gagal dihitung.",
+        });
+      }
+    }, 350);
+    return () => { active = false; clearTimeout(timer); controller.abort(); };
+  }, [stops, requestKey]);
   async function publish() {
-    if (saving) return;
+    if (saving || busy) return;
     setSaving(true);
     if (!key.current) key.current = crypto.randomUUID();
     try {
@@ -80,6 +89,7 @@ export function Planner() {
         stops: ordered,
         distance: optimized?.distance || 0,
         duration: optimized?.duration || 0,
+        route: optimized?.route,
       });
       toast.success("Penugasan tersimpan.");
       router.push(`/dashboard/dispatch/${result.id}`);
@@ -107,7 +117,7 @@ export function Planner() {
               </div>
             </div>
             <div className="stop-fields">
-              {stops.map((n, i) => (
+              {ordered.map((n, i) => (
                 <div className="stop-field" key={i}>
                   <span className={`stop-index ${i === 0 ? "origin" : ""}`}>
                     {i + 1}
@@ -121,7 +131,7 @@ export function Planner() {
                       value={n}
                       onChange={(e) =>
                         changeStops(
-                          stops.map((p, j) =>
+                          ordered.map((p, j) =>
                             i === j ? Number(e.target.value) : p,
                           ),
                         )
@@ -131,7 +141,7 @@ export function Planner() {
                         <option
                           key={j}
                           value={j}
-                          disabled={stops.includes(j) && j !== n}
+                          disabled={ordered.includes(j) && j !== n}
                         >
                           {l.name}
                         </option>
@@ -144,7 +154,7 @@ export function Planner() {
                       size="icon"
                       aria-label={`Hapus tujuan ${i}`}
                       onClick={() =>
-                        changeStops(stops.filter((_, j) => j !== i))
+                        changeStops(ordered.filter((_, j) => j !== i))
                       }
                     >
                       <Icon name="close" />
@@ -156,26 +166,21 @@ export function Planner() {
             <Button
               variant="outline"
               className="add-stop"
-              disabled={stops.length >= locations.length}
+              disabled={ordered.length >= locations.length}
               onClick={() =>
                 changeStops([
-                  ...stops,
-                  locations.findIndex((_, i) => !stops.includes(i)),
+                  ...ordered,
+                  locations.findIndex((_, i) => !ordered.includes(i)),
                 ])
               }
             >
               <Icon name="plus" />
               Tambah tujuan
             </Button>
-            <Button
-              variant="secondary"
-              className="full-width"
-              onClick={optimize}
-              disabled={busy}
-            >
-              {busy ? "Menghitung rute" : "Optimasi rute OSRM"}
-              <Icon name="dispatch" />
-            </Button>
+            <p className="route-optimization-status" role="status">
+              {busy ? "Mengoptimasi rute dengan OSRM" : optimized ? "Rute diperbarui otomatis" : "Optimasi belum tersedia"}
+            </p>
+            {error && <Button variant="outline" size="sm" onClick={() => setAttempt(n => n + 1)}>Coba lagi OSRM</Button>}
             {error && (
               <p role="alert" className="form-error">
                 {error}
@@ -201,7 +206,7 @@ export function Planner() {
                 <option value="">Pilih kendaraan tersedia</option>
                 {resources.vehicles.map((v) => (
                   <option key={v.id} value={v.id}>
-                    {v.plate} / {v.model}
+                    {v.plate} {v.model}
                   </option>
                 ))}
               </select>
@@ -219,7 +224,7 @@ export function Planner() {
                   .toSorted((a, b) => b.score - a.score)
                   .map((d) => (
                     <option key={d.id} value={d.id}>
-                      {d.name} / Safety {d.score}
+                      {d.name} dengan safety score {d.score}
                     </option>
                   ))}
               </select>
@@ -238,7 +243,7 @@ export function Planner() {
             </div>
             <FleetMap
               points={points}
-              route={optimized?.route || points.map((p) => [p.lat, p.lng])}
+              route={optimized?.route}
               playing={false}
             />
             <div className="route-estimates">
@@ -247,26 +252,27 @@ export function Planner() {
                 <strong>
                   {optimized
                     ? `${optimized.distance.toFixed(1)} km`
-                    : "Belum dihitung"}
+                    : busy ? "Menghitung" : "Belum dihitung"}
                 </strong>
               </div>
               <div>
                 <span>Estimasi berkendara</span>
                 <strong>
-                  {optimized ? `${optimized.duration} menit` : "Belum dihitung"}
+                  {optimized ? `${optimized.duration} menit` : busy ? "Menghitung" : "Belum dihitung"}
                 </strong>
               </div>
               <div>
                 <span>Sumber rute</span>
-                <strong>{optimized ? "OSRM" : "Urutan manual"}</strong>
+                <strong>{optimized ? "OSRM" : busy ? "Mengoptimasi" : "Urutan manual"}</strong>
               </div>
             </div>
           </div>
-          <DemoNote>
+          <p className="planner-route-hint">
             {optimized
               ? "Estimasi OSRM tidak memperhitungkan kemacetan real-time dan durasi bongkar muat."
-              : "Garis penghubung titik hanya pratinjau. Jalankan optimasi untuk mendapatkan rute jalan."}
-          </DemoNote>
+              : busy ? "Titik singgah ditampilkan sambil menunggu rute jalan."
+              : "Rute jalan belum tersedia. Jalankan optimasi ulang untuk melihatnya."}
+          </p>
           <div className="planner-submit">
             <p>{ordered.length - 1} pengantaran dan 1 pickup</p>
             <Button
@@ -310,9 +316,6 @@ export function Planner() {
               <li key={p.name}>{p.name}</li>
             ))}
           </ol>
-          <DemoNote>
-            Tersimpan di dashboard. Mobile belum berlangganan API ini.
-          </DemoNote>
           <DialogFooter>
             <Button
               variant="outline"
@@ -321,7 +324,7 @@ export function Planner() {
             >
               Kembali
             </Button>
-            <Button onClick={publish} disabled={saving}>
+            <Button onClick={publish} disabled={saving || busy}>
               {saving ? "Menyimpan" : "Simpan penugasan"}
             </Button>
           </DialogFooter>

@@ -16,14 +16,15 @@ export async function POST(req: NextRequest) {
       !Array.isArray(stops) ||
       stops.length < 2 ||
       stops.length > 20 ||
+      new Set(stops).size !== stops.length ||
       stops.some((n) => !Number.isInteger(n) || !locations[n])
     )
-      throw Error("Pilih minimal dua titik rute valid.");
+      return NextResponse.json({ error: "Pilih minimal dua titik rute berbeda yang valid." }, { status: 400 });
     const coordinates = stops
       .map((n) => `${locations[n].lng},${locations[n].lat}`)
       .join(";");
     const res = await fetch(
-      `https://router.project-osrm.org/trip/v1/driving/${coordinates}?source=first&roundtrip=false&geometries=geojson&overview=full`,
+      `https://router.project-osrm.org/trip/v1/driving/${coordinates}?source=first&destination=last&roundtrip=false&geometries=geojson&overview=full`,
       { signal: AbortSignal.timeout(10000), cache: "no-store" },
     );
     if (!res.ok) throw Error("Layanan rute tidak tersedia.");

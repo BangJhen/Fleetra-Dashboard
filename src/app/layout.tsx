@@ -1,3 +1,4 @@
+import "maplibre-gl/dist/maplibre-gl.css";
 import type { Metadata } from "next";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/plus-jakarta-sans";
@@ -5,7 +6,7 @@ import "leaflet/dist/leaflet.css";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 export const metadata: Metadata = {
-  title: "FLEETRA | Fleet Operations",
+  title: "FLEETRA Fleet Operations",
   description:
     "Pusat kendali armada FLEETRA. Pelacakan, penugasan, keselamatan, dan ekuitas dalam satu workspace.",
 };

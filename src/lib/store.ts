@@ -1,3 +1,7 @@
+import { migrateVehicleTypes } from "./vehicle-types";
+import { defaultOperatorProfile } from "./operator-profile";
+import { captureSafety } from "./safety-history";
+import { ensureDemoEtle } from "./etle-demo";
 import "server-only";
 import { mkdir, readFile, writeFile, rename } from "node:fs/promises";
 import path from "node:path";
@@ -16,10 +20,17 @@ const processState = globalThis as typeof globalThis & {
 const queues = (processState.fleetraQueues ??= new Map());
 async function read(): Promise<FleetState> {
   try {
-    return JSON.parse(await readFile(file, "utf8"));
+    const state = JSON.parse(await readFile(file, "utf8")) as FleetState;
+    const needsProfile = !state.operatorProfile;
+    state.operatorProfile ??= { ...defaultOperatorProfile };
+    const changedTypes = migrateVehicleTypes(state.vehicles);
+    const changedEtle = ensureDemoEtle(state);
+    if (captureSafety(state, "master") || needsProfile || changedTypes || changedEtle) await save(state);
+    return state;
   } catch (e) {
     if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw e;
     const s = createSeed();
+    captureSafety(s, "baseline");
     await save(s);
     return s;
   }
@@ -37,6 +48,7 @@ export function transact<T>(
     const s = await read();
     const result = await fn(s);
     if (write) {
+      captureSafety(s);
       s.updatedAt = new Date().toISOString();
       await save(s);
     }

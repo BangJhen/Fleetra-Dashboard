@@ -14,7 +14,6 @@ import { useFleet } from "./provider";
 import {
   BackLink,
   PageHeading,
-  DemoNote,
   Initials,
   money,
   date,
@@ -59,7 +58,7 @@ export function Rto({ id }: { id?: string }) {
         </BackLink>
         <PageHeading
           title={`Kontrak ${c.id.toUpperCase()}`}
-          description={`${d?.name} / ${v?.plate}`}
+          description={`${d?.name} dengan armada ${v?.plate}`}
         />
         <div className="rto-detail-grid">
           <section className="content-panel equity-panel">
@@ -81,9 +80,6 @@ export function Rto({ id }: { id?: string }) {
                 <strong>{money(c.total)}</strong>
               </div>
             </div>
-            <DemoNote>
-              Saldo awal berasal dari seed. Belum ada perpindahan dana.
-            </DemoNote>
           </section>
           <section className="content-panel contract-panel">
             <h2>Ringkasan kemitraan</h2>
@@ -157,17 +153,13 @@ export function Rto({ id }: { id?: string }) {
             </div>
           )}
         </section>
-        <DemoNote>
-          Modul RTO adalah simulasi ledger dan ekuitas. Tidak terhubung ke bank
-          atau escrow.
-        </DemoNote>
       </div>
     );
   }
   return (
     <div className="page">
       <PageHeading
-        title="RTO & ekuitas"
+        title="RTO dan ekuitas"
         description="Pantau langkah setiap mitra menuju kepemilikan armada."
       />
       <div className="finance-overview">
@@ -228,7 +220,7 @@ export function Rto({ id }: { id?: string }) {
                   <div>
                     <strong>{d?.name}</strong>
                     <small>
-                      {v?.plate} / {v?.model}
+                      {v?.plate} {v?.model}
                     </small>
                   </div>
                 </div>
@@ -247,7 +239,7 @@ export function Rto({ id }: { id?: string }) {
                 <div className="contract-tenure">
                   <span>Tenor berjalan</span>
                   <strong>
-                    {c.elapsed} <small>/ {c.months} bulan</small>
+                    {c.elapsed} <small>dari {c.months} bulan</small>
                   </strong>
                 </div>
                 <Icon name="chevron" />
@@ -262,10 +254,6 @@ export function Rto({ id }: { id?: string }) {
           />
         )}
       </section>
-      <DemoNote>
-        RTO merupakan simulasi pay-per-trip dan ekuitas. Tidak ada transfer bank
-        atau escrow nyata.
-      </DemoNote>
     </div>
   );
 }

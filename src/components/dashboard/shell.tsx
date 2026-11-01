@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -13,11 +13,16 @@ import {
 import { Icon, type IconName } from "./icons";
 import { useFleet } from "./provider";
 import { cn } from "@/lib/utils";
+import { defaultOperatorProfile } from "@/lib/operator-profile";
 const nav: { label: string; href: string; icon: IconName; sub?: boolean }[] = [
   { label: "Live tracking", href: "/dashboard", icon: "tracking" },
-  { label: "Dispatch & trips", href: "/dashboard/dispatch", icon: "dispatch" },
-  { label: "Health & safety", href: "/dashboard/safety", icon: "safety" },
-  { label: "RTO & ekuitas", href: "/dashboard/finance/rto", icon: "finance" },
+  {
+    label: "Dispatch dan trips",
+    href: "/dashboard/dispatch",
+    icon: "dispatch",
+  },
+  { label: "Health dan safety", href: "/dashboard/safety", icon: "safety" },
+  { label: "RTO dan ekuitas", href: "/dashboard/finance/rto", icon: "finance" },
   {
     label: "Rekonsiliasi ETLE",
     href: "/dashboard/finance/etle",
@@ -36,14 +41,14 @@ const nav: { label: string; href: string; icon: IconName; sub?: boolean }[] = [
     sub: true,
   },
 ];
-export function Brand() {
+export function Brand({ sidebar = false }: { sidebar?: boolean }) {
   return (
-    <div className="brand">
+    <div className={sidebar ? "brand brand-sidebar" : "brand"}>
       <Image
-        src="/logo-fleetra.png"
+        src={sidebar ? "/logo-fleetra-horizontal.png" : "/logo-fleetra.png"}
         alt="FLEETRA"
-        width={154}
-        height={154}
+        width={sidebar ? 2172 : 154}
+        height={sidebar ? 724 : 154}
         priority
       />
     </div>
@@ -55,7 +60,31 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const data = useFleet((s) => s.data);
   const online = useFleet((s) => s.online);
   const refresh = useFleet((s) => s.refresh);
-  const router = useRouter();
+  const refreshed = useFleet((s) => s.refreshed);
+  const [refreshing, setRefreshing] = useState(false);
+  async function refreshData() {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      await refresh();
+    } finally {
+      setRefreshing(false);
+    }
+  }
+  const refreshedTime = new Date(refreshed)
+    .toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Asia/Jakarta",
+    })
+    .replaceAll(".", ":");
+  const profile = data.operatorProfile || defaultOperatorProfile;
+  const initials = profile.name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase();
   const unread = data.notices.filter((n) => n.status === "unread").length;
   const selected = nav.find((n) =>
     n.href === "/dashboard" ? pathname === n.href : pathname.startsWith(n.href),
@@ -67,16 +96,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
         aria-label="FLEETRA beranda"
         onClick={() => setOpen(false)}
       >
-        <Brand />
+        <Brand sidebar />
       </Link>
-      <div className="workspace-switch">
-        <span className="workspace-avatar">F</span>
-        <div>
-          <strong>FLEETRA Operations</strong>
-          <small>Bandung Raya</small>
-        </div>
-        <span className="workspace-tag">MVP</span>
-      </div>
       <div className="nav-section-label">Operasional</div>
       <nav aria-label="Navigasi utama">
         {nav.map((n, i) => (
@@ -108,34 +129,20 @@ export function Shell({ children }: { children: React.ReactNode }) {
         ))}
       </nav>
       <div className="sidebar-bottom">
-        <div className="demo-sidebar">
-          <div>
-            <span className="small-square" />
-            Workspace demo
-          </div>
-          <p>Jelajahi operasional armada dengan data simulasi.</p>
-        </div>
         <Link
-          className={cn(
-            "nav-item",
-            pathname === "/dashboard/settings" && "active",
-          )}
-          href="/dashboard/settings"
-        >
-          <Icon name="settings" />
-          Pengaturan
-        </Link>
-        <button
           className="profile-button"
-          onClick={() => router.push("/dashboard/settings")}
+          href="/dashboard/profile"
+          aria-label="Profil operator"
+          aria-current={pathname === "/dashboard/profile" ? "page" : undefined}
+          onClick={() => setOpen(false)}
         >
-          <span className="profile-avatar">FM</span>
+          <span className="profile-avatar">{initials}</span>
           <span>
-            <strong>Fleet Manager</strong>
-            <small>manager@fleetra.demo</small>
+            <strong>{profile.name}</strong>
+            <small>{profile.email}</small>
           </span>
           <Icon name="chevron" />
-        </button>
+        </Link>
       </div>
     </div>
   );
@@ -161,24 +168,45 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 {sidebar}
               </SheetContent>
             </Sheet>
-            <span className="breadcrumb-root">Workspace</span>
-            <Icon name="chevron" />
-            <span className="breadcrumb-current">
-              {selected?.label ||
-                (pathname.includes("notifications")
-                  ? "Notifikasi"
-                  : "Pengaturan")}
-            </span>
+            <div className="topbar-page-context">
+              <span className="topbar-workspace">FLEETRA Operations</span>
+              <span className="breadcrumb-current">
+                {selected?.label ||
+                  (pathname.includes("notifications")
+                    ? "Notifikasi"
+                    : "Profil")}
+              </span>
+            </div>
+            <span className="topbar-region">Bandung Raya</span>
           </div>
           <div className="topbar-right">
             <button
-              className={cn("sync-status", !online && "offline")}
-              onClick={() => refresh()}
+              className={cn("topbar-sync", !online && "is-offline")}
+              onClick={refreshData}
+              disabled={refreshing}
+              aria-label="Perbarui data dashboard"
+              title="Muat ulang data dashboard"
             >
-              <span />
-              {online ? "Data tersinkron" : "Koneksi terputus"}
+              <span className="topbar-sync-icon">
+                <Icon name={online ? "check" : "refresh"} />
+              </span>
+              <span className="topbar-sync-copy">
+                <strong>
+                  {refreshing
+                    ? "Memperbarui data"
+                    : online
+                      ? "Data tersinkron"
+                      : "Koneksi terputus"}
+                </strong>
+                <small>
+                  {refreshing
+                    ? "Mohon tunggu"
+                    : online
+                      ? `Diperbarui ${refreshedTime} WIB`
+                      : "Coba sambungkan kembali"}
+                </small>
+              </span>
             </button>
-            <span className="topbar-divider" />
             <Link
               className="notification-button"
               href="/dashboard/notifications"
@@ -190,11 +218,18 @@ export function Shell({ children }: { children: React.ReactNode }) {
               )}
             </Link>
             <Link
-              href="/dashboard/settings"
-              className="top-avatar"
-              aria-label="Akun Fleet Manager"
+              href="/dashboard/profile"
+              className="topbar-account"
+              aria-label="Buka profil"
             >
-              FM
+              <span className="topbar-account-avatar">{initials}</span>
+              <span className="topbar-account-copy">
+                <strong>{profile.name}</strong>
+                <small>
+                  {profile.isDemo === false ? "Akun operator" : "Akun demo"}
+                </small>
+              </span>
+              <Icon name="chevron" />
             </Link>
           </div>
         </header>
@@ -207,10 +242,6 @@ export function Shell({ children }: { children: React.ReactNode }) {
           )}
           {children}
         </main>
-        <footer className="app-footer">
-          <span>FLEETRA Fleet Management</span>
-          <span>Prototipe ADIKARA 2026</span>
-        </footer>
       </div>
     </div>
   );

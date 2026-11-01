@@ -1,5 +1,7 @@
 "use client";
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { SafetyPanels, RecentSafetyHistory } from "./safety-panels";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,19 +15,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useFleet } from "./provider";
-import {
-  PageHeading,
-  DemoNote,
-  Status,
-  Initials,
-  BackLink,
-  EmptyState,
-} from "./common";
+import { PageHeading, Status, Initials, EmptyState } from "./common";
 import { Icon } from "./icons";
 export function Safety() {
-  const data = useFleet((s) => s.data);
+  const params = useSearchParams();
+  const stored = useFleet((s) => s.data);
+  const data = {
+    ...stored,
+    vehicles: stored.vehicles.filter((v) => !v.archivedAt),
+    drivers: stored.drivers.filter((d) => !d.archivedAt),
+  };
   const [query, setQuery] = useState("");
   const [onlyRisk, setOnlyRisk] = useState(true);
+  const [page, setPage] = useState(1);
+  const pageSize = 8;
   const average =
     data.vehicles.reduce((n, v) => n + v.health, 0) /
     Math.max(1, data.vehicles.length);
@@ -37,55 +40,30 @@ export function Safety() {
   const drivers = data.drivers
     .filter((d) => d.name.toLowerCase().includes(query.toLowerCase()))
     .toSorted((a, b) => b.score - a.score);
+  const vehiclePage = Math.min(page, Math.max(1, Math.ceil(vehicles.length / pageSize)));
+  const driverPage = Math.min(page, Math.max(1, Math.ceil(drivers.length / pageSize)));
   return (
-    <div className="page">
+    <div className="page safety-overview-page">
       <PageHeading
-        title="Health & safety"
-        description="Kenali risiko lebih awal. Jaga armada dan pengemudi tetap siap."
+        title="Health dan safety"
+        description="Kondisi armada dan keselamatan pengemudi."
       />
-      <Tabs defaultValue="health" onValueChange={() => setQuery("")}>
+      <Tabs
+        defaultValue={params.get("tab") === "drivers" ? "drivers" : "health"}
+        onValueChange={() => { setQuery(""); setPage(1); }}
+      >
         <TabsList className="page-tabs">
           <TabsTrigger value="health">Kesehatan armada</TabsTrigger>
           <TabsTrigger value="drivers">Keselamatan pengemudi</TabsTrigger>
         </TabsList>
         <TabsContent value="health">
-          <div className="health-overview">
-            <div className="health-score">
-              <div>
-                <span>Indeks kondisi armada</span>
-                <strong>
-                  {average.toFixed(1)}
-                  <small>/ 100</small>
-                </strong>
-                <p>Rata-rata skor kondisi dari {data.vehicles.length} unit.</p>
-              </div>
-              <div
-                className="score-ring"
-                style={
-                  { "--progress": `${average * 3.6}deg` } as React.CSSProperties
-                }
-              >
-                <span>{Math.round(average)}</span>
-              </div>
-            </div>
-            <div className="health-callout">
-              <span className="status-dot" />
-              <div>
-                <strong>
-                  {data.vehicles.filter((v) => v.status === "service").length}{" "}
-                  armada memerlukan pemeriksaan
-                </strong>
-                <p>
-                  Estimasi kampas rem di bawah 30 persen. Armada ini tidak
-                  tersedia untuk penugasan baru.
-                </p>
-                <small>
-                  Indikator simulasi, bukan diagnosis teknis tersertifikasi.
-                </small>
-              </div>
-            </div>
+          <div className="safety-overview-summary">
+            <span>Indeks kondisi armada</span>
+            <strong>{average.toFixed(1)}<small>dari 100</small></strong>
+            <span className="muted">{data.vehicles.length} armada aktif</span>
           </div>
-          <section className="content-panel">
+          <SafetyPanels data={data} kind="vehicles" />
+          <section className="content-panel safety-working-list">
             <div className="table-toolbar">
               <div>
                 <h2>
@@ -93,14 +71,11 @@ export function Safety() {
                     ? "Prioritas pemeriksaan"
                     : "Kondisi seluruh armada"}
                 </h2>
-                <p className="muted">
-                  Periksa kondisi fisik sebelum mengambil tindakan.
-                </p>
               </div>
               <div className="inline-controls">
                 <Button
                   variant="outline"
-                  onClick={() => setOnlyRisk((v) => !v)}
+                  onClick={() => { setOnlyRisk((v) => !v); setPage(1); }}
                 >
                   {onlyRisk ? "Lihat semua armada" : "Hanya prioritas"}
                 </Button>
@@ -109,7 +84,7 @@ export function Safety() {
                   aria-label="Cari armada"
                   placeholder="Cari plat kendaraan"
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={(e) => { setQuery(e.target.value); setPage(1); }}
                 />
               </div>
             </div>
@@ -125,7 +100,7 @@ export function Safety() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {vehicles.map((v) => (
+                {vehicles.slice((vehiclePage - 1) * pageSize, vehiclePage * pageSize).map((v) => (
                   <TableRow key={v.id}>
                     <TableCell>
                       <strong>{v.plate}</strong>
@@ -144,7 +119,7 @@ export function Safety() {
                     <TableCell>
                       {v.odometer.toLocaleString("id-ID")} km
                     </TableCell>
-                    <TableCell>{v.health} / 100</TableCell>
+                    <TableCell>{v.health} dari 100</TableCell>
                     <TableCell>
                       <Status status={v.status} />
                     </TableCell>
@@ -166,26 +141,18 @@ export function Safety() {
                 description="Ubah pencarian plat kendaraan."
               />
             )}
+            <SafetyListPagination count={vehicles.length} page={page} pageSize={pageSize} onPage={setPage} />
           </section>
+          <RecentSafetyHistory data={data} kind="vehicles" />
         </TabsContent>
         <TabsContent value="drivers">
-          <div className="safety-driver-summary">
-            <div>
-              <span>Rata-rata safety score</span>
-              <strong>
-                {(
-                  data.drivers.reduce((n, d) => n + d.score, 0) /
-                  data.drivers.length
-                ).toFixed(1)}
-                <small>/ 100</small>
-              </strong>
-            </div>
-            <p>
-              Skor dan kejadian pada halaman ini merupakan seed simulasi untuk
-              demonstrasi evaluasi keselamatan.
-            </p>
+          <div className="safety-overview-summary">
+            <span>Rata rata safety score</span>
+            <strong>{(data.drivers.reduce((n, d) => n + d.score, 0) / Math.max(1, data.drivers.length)).toFixed(1)}<small>dari 100</small></strong>
+            <span className="muted">{data.drivers.length} pengemudi aktif</span>
           </div>
-          <section className="content-panel">
+          <SafetyPanels data={data} kind="drivers" />
+          <section className="content-panel safety-working-list">
             <div className="table-toolbar">
               <div>
                 <h2>Peringkat keselamatan pengemudi</h2>
@@ -196,7 +163,7 @@ export function Safety() {
                 aria-label="Cari pengemudi"
                 placeholder="Cari nama pengemudi"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => { setQuery(e.target.value); setPage(1); }}
               />
             </div>
             <Table>
@@ -212,10 +179,10 @@ export function Safety() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {drivers.map((d, i) => (
+                {drivers.slice((driverPage - 1) * pageSize, driverPage * pageSize).map((d, i) => (
                   <TableRow key={d.id}>
                     <TableCell>
-                      <span className="rank">{i + 1}</span>
+                      <span className="rank">{(driverPage - 1) * pageSize + i + 1}</span>
                     </TableCell>
                     <TableCell>
                       <div className="person-cell">
@@ -230,7 +197,7 @@ export function Safety() {
                       <strong className={d.score > 85 ? "good-score" : "muted"}>
                         {d.score}
                       </strong>
-                      <span className="muted"> / 100</span>
+                      <span className="muted"> dari 100</span>
                     </TableCell>
                     <TableCell>
                       <Button asChild variant="ghost" size="icon">
@@ -252,86 +219,27 @@ export function Safety() {
                 description="Coba nama pengemudi lain."
               />
             )}
+            <SafetyListPagination count={drivers.length} page={page} pageSize={pageSize} onPage={setPage} />
           </section>
+          <RecentSafetyHistory data={data} kind="drivers" />
         </TabsContent>
       </Tabs>
-      <DemoNote>
-        Indeks kondisi adalah rata-rata snapshot seed. Skor pengemudi dan
-        estimasi rem belum dihitung dari sensor.
-      </DemoNote>
     </div>
   );
 }
-export function SafetyDetail({
-  kind,
-  id,
-}: {
-  kind: "vehicles" | "drivers";
-  id: string;
+function SafetyListPagination({ count, page, pageSize, onPage }: {
+  count: number; page: number; pageSize: number; onPage: (page: number) => void;
 }) {
-  const data = useFleet((s) => s.data);
-  const v = data.vehicles.find((v) => v.id === id);
-  const d = data.drivers.find((d) => d.id === id);
-  if ((kind === "vehicles" && !v) || (kind === "drivers" && !d))
-    return (
-      <div className="page">
-        <BackLink href="/dashboard/safety">Kembali ke health & safety</BackLink>
-        <EmptyState
-          title="Data tidak ditemukan"
-          description="Pilih armada atau pengemudi dari daftar yang tersedia."
-        />
-      </div>
-    );
-  return (
-    <div className="page">
-      <BackLink href="/dashboard/safety">Kembali ke health & safety</BackLink>
-      <PageHeading
-        title={kind === "vehicles" ? v!.plate : d!.name}
-        description={
-          kind === "vehicles"
-            ? v!.model
-            : "Profil keselamatan pengemudi / Data simulasi"
-        }
-      >
-        {kind === "vehicles" && <Status status={v!.status} />}
-      </PageHeading>
-      <section className="detail-facts content-panel">
-        {(kind === "vehicles"
-          ? [
-              ["Indeks kondisi", `${v!.health} / 100`],
-              ["Estimasi kampas rem", `${v!.brake} persen`],
-              ["Bahan bakar", `${v!.fuel} persen`],
-              ["Odometer", `${v!.odometer.toLocaleString("id-ID")} km`],
-            ]
-          : [
-              ["Safety score", `${d!.score} / 100`],
-              ["Total perjalanan", d!.trips],
-              ["Pengereman keras", `${d!.braking} kejadian`],
-              ["Melebihi kecepatan", `${d!.speeding} kejadian`],
-            ]
-        ).map(([label, value]) => (
-          <div key={label}>
-            <span>{label}</span>
-            <strong>{value}</strong>
-          </div>
-        ))}
-      </section>
-      <section className="content-panel detail-explanation">
-        <h2>
-          {kind === "vehicles" ? "Catatan pemeriksaan" : "Catatan evaluasi"}
-        </h2>
-        <p>
-          {kind === "vehicles"
-            ? v!.brake < 30
-              ? "Estimasi kampas rem berada di bawah ambang demo 30 persen. Armada ditandai memerlukan servis dan diblokir dari penugasan baru. Lakukan pemeriksaan fisik oleh teknisi."
-              : "Tidak ada peringatan kritis pada snapshot demo ini. Tetap lakukan pemeriksaan rutin sebelum perjalanan."
-            : "Skor ini berasal dari seed demo. Rincian waktu dan lokasi insiden belum tersedia; sistem tidak mengarang riwayat kejadian."}
-        </p>
-        <DemoNote>
-          Kondisi dan skor adalah estimasi simulasi. Data ini bukan sertifikasi
-          keselamatan.
-        </DemoNote>
-      </section>
+  if (!count) return null;
+  const pages = Math.max(1, Math.ceil(count / pageSize));
+  const current = Math.min(page, pages);
+  return <div className="table-footer safety-list-pagination">
+    <span>{(current - 1) * pageSize + 1} sampai {Math.min(current * pageSize, count)} dari {count}</span>
+    <div className="inline-controls">
+      <Button variant="outline" size="sm" disabled={current === 1} onClick={() => onPage(current - 1)}>Sebelumnya</Button>
+      <span className="muted">Halaman {current} dari {pages}</span>
+      <Button variant="outline" size="sm" disabled={current === pages} onClick={() => onPage(current + 1)}>Berikutnya</Button>
     </div>
-  );
+  </div>;
 }
+export { SafetyDetail } from "./safety-detail";

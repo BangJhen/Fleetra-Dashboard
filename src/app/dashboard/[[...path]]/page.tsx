@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Tracking } from "@/components/dashboard/tracking";
 import { Dispatch } from "@/components/dashboard/dispatch";
 import { Planner } from "@/components/dashboard/planner";
@@ -7,7 +7,8 @@ import { Safety, SafetyDetail } from "@/components/dashboard/safety";
 import { Rto } from "@/components/dashboard/finance";
 import { Etle } from "@/components/dashboard/etle";
 import { Management } from "@/components/dashboard/management";
-import { Notifications, Settings } from "@/components/dashboard/support";
+import { Notifications } from "@/components/dashboard/support";
+import { Profile } from "@/components/dashboard/profile";
 export default async function Page({
   params,
 }: {
@@ -39,6 +40,7 @@ export default async function Page({
   )
     return <Management kind={second as "vehicles" | "drivers"} />;
   if (first === "notifications" && path.length === 1) return <Notifications />;
-  if (first === "settings" && path.length === 1) return <Settings />;
+  if (first === "settings" && path.length === 1) redirect("/dashboard/profile");
+  if (first === "profile" && path.length === 1) return <Profile />;
   notFound();
 }

@@ -2,22 +2,86 @@
 import { useEffect, useState } from "react";
 import {
   MapContainer,
-  TileLayer,
   Marker,
   Tooltip,
   Polyline,
   useMap,
 } from "react-leaflet";
 import L from "leaflet";
+import { setWorkerUrl } from "maplibre-gl";
+import { maplibreGL } from "@maplibre/maplibre-gl-leaflet";
 import type { Vehicle } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Icon } from "./icons";
+function PlaceBasemap({ onError }: { onError: (failed: boolean) => void }) {
+  const map = useMap();
+  useEffect(() => {
+    setWorkerUrl("/maps/maplibre-gl-worker.mjs");
+    const layer = maplibreGL({
+      style: process.env.NEXT_PUBLIC_MAP_STYLE_URL || "/maps/fleetra-places.json",
+      attributionControl: false,
+      interactive: false,
+    }).addTo(map);
+    const basemap = layer.getMaplibreMap();
+    const ready = () => {
+      map.getContainer().setAttribute("data-basemap-ready", "true");
+      onError(false);
+    };
+    const loading = () => map.getContainer().removeAttribute("data-basemap-ready");
+    map.on("movestart", loading);
+    basemap.on("movestart", loading);
+    basemap.on("idle", ready);
+    basemap.on("error", () => onError(true));
+    return () => {
+      map.off("movestart", loading);
+      map.getContainer().removeAttribute("data-basemap-ready");
+      map.removeLayer(layer);
+    };
+  }, [map, onError]);
+  return null;
+}
+function MapSources() {
+  const map = useMap();
+  const [expanded, setExpanded] = useState(true);
+  useEffect(() => {
+    if (!expanded) return;
+    const collapse = () => setExpanded(false);
+    const timer = setTimeout(collapse, 5000);
+    map.on("dragstart", collapse);
+    return () => { clearTimeout(timer); map.off("dragstart", collapse); };
+  }, [map, expanded]);
+  return <details className="map-source-control" open={expanded}
+    onClick={e => e.stopPropagation()} onPointerDown={e => e.stopPropagation()}>
+    <summary onClick={e => { e.preventDefault(); setExpanded(value => !value); }}>Sumber peta</summary>
+    <div>
+      <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a>
+      <a href="https://openfreemap.org/" target="_blank" rel="noreferrer">OpenFreeMap</a>
+    </div>
+  </details>;
+}
+function RouteFraming({ route, points }: {
+  route?: [number, number][]; points?: { lat: number; lng: number }[];
+}) {
+  const map = useMap();
+  const coordinates = route?.length ? route : points?.map(p => [p.lat, p.lng] as [number, number]);
+  const bounds = coordinates?.length ? L.latLngBounds(coordinates).toBBoxString() : "";
+  useEffect(() => {
+    if (!bounds) return;
+    const [west, south, east, north] = bounds.split(",").map(Number);
+    const frame = () => map.fitBounds([[south, west], [north, east]], { padding: [36, 36], maxZoom: 15, animate: false });
+    frame();
+    map.on("resize", frame);
+    return () => { map.off("resize", frame); };
+  }, [map, bounds]);
+  return null;
+}
 function Controls({
-  selected,
-  vehicles,
+  selected, vehicles, route, points,
 }: {
   selected?: string;
   vehicles: Vehicle[];
+  route?: [number, number][];
+  points?: { lat: number; lng: number }[];
 }) {
   const map = useMap();
   const target = vehicles.find((v) => v.id === selected);
@@ -49,11 +113,11 @@ function Controls({
       <Button
         variant="outline"
         size="icon"
-        aria-label="Pusatkan peta Bandung"
+        aria-label={route?.length ? "Pusatkan rute" : "Pusatkan peta Bandung"}
         onClick={() =>
           map.fitBounds(
-            vehicles.length
-              ? L.latLngBounds(vehicles.map((v) => [v.lat, v.lng]))
+            route?.length || points?.length || vehicles.length
+              ? L.latLngBounds(route?.length ? route : (points?.length ? points : vehicles).map((v) => [v.lat, v.lng] as [number, number]))
               : L.latLngBounds([
                   [-6.96, 107.54],
                   [-6.85, 107.7],
@@ -83,7 +147,6 @@ export default function FleetMap({
   points?: { lat: number; lng: number; name: string }[];
 }) {
   const [tick, setTick] = useState(0);
-  const [labels, setLabels] = useState(true);
   const [tileError, setTileError] = useState(false);
   useEffect(() => {
     if (!playing) return;
@@ -91,33 +154,23 @@ export default function FleetMap({
     return () => clearInterval(id);
   }, [playing]);
   return (
-    <div className={labels ? "map-canvas" : "map-canvas vivid-map"}>
+    <div className="map-canvas">
       <MapContainer
         center={[-6.909, 107.616]}
         zoom={12}
         zoomControl={false}
         scrollWheelZoom
-        attributionControl
+        attributionControl={false}
         className="leaflet-map"
       >
-        <TileLayer
-          url={
-            process.env.NEXT_PUBLIC_MAP_TILE_URL ||
-            "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-          }
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          eventHandlers={{
-            tileerror: () => setTileError(true),
-            tileload: () => setTileError(false),
-          }}
-        />
+        <PlaceBasemap onError={setTileError} />
         {vehicles.map((v) => {
           const color =
             v.status === "moving"
               ? "#2463D8"
               : v.status === "idle"
-                ? "#A47727"
-                : "#B15050";
+                ? "#64748B"
+                : "#1E57C7";
           const offset =
             v.status === "moving" ? Math.sin(tick * 0.1) * 0.0004 : 0;
           return (
@@ -147,7 +200,7 @@ export default function FleetMap({
         {route && (
           <Polyline
             positions={route}
-            pathOptions={{ color: "#2463D8", weight: 4, opacity: 0.85 }}
+            pathOptions={{ color: "#2463D8", weight: 4, opacity: 0.9, className: "osrm-route" }}
           />
         )}
         {points?.map((p, i) => (
@@ -165,42 +218,15 @@ export default function FleetMap({
             <Tooltip>{p.name}</Tooltip>
           </Marker>
         ))}
-        <Controls selected={selected} vehicles={vehicles} />
+        <RouteFraming route={route} points={points} />
+        <Controls selected={selected} vehicles={vehicles} route={route} points={points} />
+        <MapSources />
       </MapContainer>
-      <Button
-        variant="outline"
-        size="icon"
-        aria-label="Ganti kontras peta"
-        className="map-layer-button"
-        onClick={() => setLabels((l) => !l)}
-      >
-        <Icon name="layers" />
-      </Button>
-      <div className="map-region-label">
-        <span className="map-region-dot" />
-        Bandung Raya
-        <span className="map-region-separator" />
-        Simulasi GPS
-      </div>
       {tileError && (
         <div className="map-error">
           Sebagian peta gagal dimuat. Daftar armada tetap dapat diakses.
         </div>
       )}
-      <div className="map-legend">
-        <span>
-          <i style={{ background: "#2463D8" }} />
-          Bergerak
-        </span>
-        <span>
-          <i style={{ background: "#A47727" }} />
-          Idle
-        </span>
-        <span>
-          <i style={{ background: "#B15050" }} />
-          Servis
-        </span>
-      </div>
     </div>
   );
 }

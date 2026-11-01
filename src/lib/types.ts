@@ -1,9 +1,14 @@
+export type VehicleType = "car" | "van" | "pickup" | "truck" | "motorcycle" | "bus";
 export type VehicleStatus = "moving" | "idle" | "service";
 export type TripStatus = "assigned" | "in_progress" | "completed" | "cancelled";
 export interface Vehicle {
+  archivedAt?: string;
+  version?: number;
+  creationKey?: string;
   id: string;
   plate: string;
   model: string;
+  type: VehicleType;
   status: VehicleStatus;
   driverId: string;
   lat: number;
@@ -17,6 +22,9 @@ export interface Vehicle {
   location: string;
 }
 export interface Driver {
+  archivedAt?: string;
+  version?: number;
+  creationKey?: string;
   id: string;
   name: string;
   phone: string;
@@ -48,6 +56,8 @@ export interface Trip {
   completedAt?: string;
   distance: number;
   duration: number;
+  route?: [number, number][];
+  routeSource?: "OSRM";
   key: string;
 }
 export interface Contract {
@@ -73,6 +83,7 @@ export interface Etle {
   at: string;
   location: string;
   candidates: string[];
+  source?: "simulasi" | "operator";
   status:
     "unmatched" | "candidate_match" | "needs_review" | "confirmed" | "disputed";
 }
@@ -85,7 +96,37 @@ export interface Notice {
   at: string;
   status: "unread" | "read" | "acknowledged" | "resolved";
 }
+export interface SafetySnapshot {
+  id: string;
+  kind: "vehicles" | "drivers";
+  entityId: string;
+  at: string;
+  source: "baseline" | "master" | "manual";
+  note: string;
+  key?: string;
+  values: {
+    status?: VehicleStatus;
+    health?: number;
+    brake?: number;
+    fuel?: number;
+    odometer?: number;
+    speed?: number;
+    score?: number;
+    braking?: number;
+    speeding?: number;
+    trips?: number;
+  };
+}
+export interface OperatorProfile {
+  isDemo?: boolean;
+  name: string;
+  email: string;
+  phone: string;
+  version: number;
+}
 export interface FleetState {
+  operatorProfile: OperatorProfile;
+  safetyHistory: SafetySnapshot[];
   vehicles: Vehicle[];
   drivers: Driver[];
   trips: Trip[];

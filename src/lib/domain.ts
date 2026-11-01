@@ -6,10 +6,16 @@ export function availableResources(s: FleetState) {
   const active = s.trips.filter(activeTrip);
   return {
     vehicles: s.vehicles.filter(
-      (v) => v.status === "idle" && !active.some((t) => t.vehicleId === v.id),
+      (v) =>
+        !v.archivedAt &&
+        v.status === "idle" &&
+        !active.some((t) => t.vehicleId === v.id),
     ),
     drivers: s.drivers.filter(
-      (d) => d.score > 85 && !active.some((t) => t.driverId === d.id),
+      (d) =>
+        !d.archivedAt &&
+        d.score > 85 &&
+        !active.some((t) => t.driverId === d.id),
     ),
   };
 }

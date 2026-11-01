@@ -1,23 +1,31 @@
+import { validateRouteGeometry } from "@/lib/road-route";
+import { updateOperatorProfile } from "@/lib/operator-profile";
+import { recordSafety } from "@/lib/safety-history";
+import { changeMaster } from "@/lib/master-data";
 import { sameOrigin } from "@/lib/request";
 import { NextRequest, NextResponse } from "next/server";
-import { isAuthenticated } from "@/lib/auth";
-import { getState, transact } from "@/lib/store";
+import { sessionUserId } from "@/lib/auth";
+import { dashboardState } from "@/lib/dashboard-state";
+import { saveRegisteredProfile } from "@/lib/accounts";
+import { transact } from "@/lib/store";
 import { assertAllocation, matchTrips } from "@/lib/domain";
 import { locations } from "@/lib/seed";
 import type { Etle, Trip } from "@/lib/types";
 export const runtime = "nodejs";
 export async function GET() {
-  if (!(await isAuthenticated()))
+  const userId = await sessionUserId();
+  if (!userId)
     return NextResponse.json(
       { error: "Sesi berakhir. Silakan masuk kembali." },
       { status: 401 },
     );
-  return NextResponse.json(await getState(), {
+  return NextResponse.json(await dashboardState(userId), {
     headers: { "Cache-Control": "no-store" },
   });
 }
 export async function POST(req: NextRequest) {
-  if (!(await isAuthenticated()))
+  const userId = await sessionUserId();
+  if (!userId)
     return NextResponse.json(
       { error: "Sesi berakhir. Silakan masuk kembali." },
       { status: 401 },
@@ -34,8 +42,21 @@ export async function POST(req: NextRequest) {
     );
   try {
     const body = await req.json();
+    if (!body || typeof body !== "object" || Array.isArray(body))
+      throw Error("Permintaan tidak valid.");
+    if (body.action === "update-profile" && userId !== "demo")
+      return NextResponse.json(await saveRegisteredProfile(userId, body));
     const result = await transact((s) => {
       const now = new Date().toISOString();
+      if (body.action === "update-profile")
+        return updateOperatorProfile(s, body);
+      if (body.action === "safety-record") return recordSafety(s, body);
+      if (
+        ["master-save", "master-archive", "master-restore"].includes(
+          body.action,
+        )
+      )
+        return changeMaster(s, body);
       if (body.action === "create-trip") {
         if (typeof body.key !== "string" || body.key.length > 100)
           throw Error("Kunci penugasan tidak valid.");
@@ -53,7 +74,9 @@ export async function POST(req: NextRequest) {
           throw Error("Pilih gudang dan minimal satu tujuan yang valid.");
         if (new Set(body.stops).size !== body.stops.length)
           throw Error("Titik singgah tidak boleh berulang.");
+        const route = validateRouteGeometry(body.route);
         const trip: Trip = {
+          ...(route ? { route, routeSource: "OSRM" as const } : {}),
           id: crypto.randomUUID(),
           code: `TRIP-2026-${String(99 + s.trips.filter((t) => !t.key.startsWith("seed")).length).padStart(3, "0")}`,
           vehicleId: body.vehicleId,
@@ -107,6 +130,7 @@ export async function POST(req: NextRequest) {
           at: body.at,
           location: String(body.location || "Tidak dicantumkan").slice(0, 200),
           candidates,
+          source: "operator",
           status:
             candidates.length === 0
               ? "unmatched"

@@ -22,7 +22,7 @@ npm start
 
 - Next.js 16 App Router, React 19, TypeScript.
 - Tailwind CSS v4, komponen shadcn/ui berbasis Radix.
-- Leaflet dan React Leaflet, tile OpenStreetMap, optimasi OSRM.
+- Leaflet dan React Leaflet, basemap vektor MapLibre dan OpenFreeMap, optimasi OSRM.
 - Zustand store per provider, server components untuk memuat data awal.
 - Font Inter dan Plus Jakarta Sans dibundel lokal, tanpa ketergantungan Google Fonts saat runtime.
 - Route Handler Next.js dan penyimpanan JSON atomik untuk prototipe satu proses Node.
@@ -36,7 +36,7 @@ npm start
 | Health & safety | Indeks kondisi dari snapshot seed, daftar prioritas, blok armada servis, leaderboard dan detail pengemudi.                                                    |
 | RTO             | Kontrak kemitraan, ekuitas dari saldo awal dan ledger, tautan ke sumber trip, setoran simulasi satu kali setelah seluruh stop selesai.                        |
 | ETLE            | Input manual, pencocokan plat dan interval perjalanan, hasil tak cocok/tunggal/ambigu, konfirmasi internal atau sengketa.                                     |
-| Pendukung       | Master kendaraan dan pengemudi baca saja dengan pencarian, pagination dan CSV; notifikasi, acknowledge/resolve SOS; profil dan logout.                        |
+| Pendukung       | Master kendaraan dan pengemudi dengan tambah, ubah, arsip, pulihkan, pencarian, pagination dan CSV; notifikasi, acknowledge/resolve SOS; profil dan logout.   |
 
 ## Data dan batasan MVP
 
@@ -54,7 +54,7 @@ Salin `.env.example` menjadi `.env.local` jika perlu. Tetapkan `SESSION_SECRET` 
 
 `MOBILE_DEMO_TOKEN` bersifat opsional dan tidak boleh memakai prefix `NEXT_PUBLIC`. Tanpa token, endpoint Mobile memberikan 503 agar tidak terbuka tanpa sengaja. Token demo mengikat satu identitas driver, ditentukan `MOBILE_DEMO_DRIVER_ID` (default `d1`), bukan role-based auth produksi. Untuk produksi, ganti akun demo serta shared token dengan autentikasi per pengguna dan izin database.
 
-Peta default memakai tile OpenStreetMap dengan atribusi yang tetap terlihat. Ikuti [kebijakan tile OSM](https://operations.osmfoundation.org/policies/tiles/) dan gunakan provider sesuai kapasitas saat produksi. URL tile dapat diganti melalui `NEXT_PUBLIC_MAP_TILE_URL`; ganti atribusi di `fleet-map.tsx` bila menggunakan provider lain.
+Peta default memakai data OpenStreetMap dari OpenFreeMap dengan gaya lokal `public/maps/fleetra-places.json`, diadaptasi dari Positron. Warna air dan area hijau dibuat lembut; label jalan, perisai nomor jalan, rel, dan simbol bandara disembunyikan agar nama wilayah lebih mudah dibaca. Tidak ada lapisan lalu lintas. Atribusi sumber tampil pada awal pemuatan lalu merapat setelah lima detik atau saat peta digeser, dan selalu dapat dibuka melalui kontrol Sumber peta. Prefix Leaflet dinonaktifkan. Gaya peta dapat diganti melalui `NEXT_PUBLIC_MAP_STYLE_URL`; sesuaikan atribusi di `fleet-map.tsx` jika memakai sumber lain. Basemap vektor membutuhkan WebGL dan koneksi internet; saat sumber gagal dimuat, daftar armada tetap dapat digunakan.
 
 ## Verifikasi
 
@@ -78,3 +78,37 @@ Tes mencakup alokasi bentrok, idempotency publish, matching ETLE, autentikasi/or
 - `src/lib`: tipe, seed, autentikasi, transaksi lokal dan aturan domain.
 - `tests`: tes domain dan alur browser.
 - `docs`: rencana, kontrak integrasi dan screenshot hasil verifikasi.
+
+## CRUD master data
+
+Halaman Data armada dan Data pengemudi mendukung tambah, baca, ubah, arsipkan dan pulihkan. Arsip adalah soft delete: identitas dan referensi perjalanan tetap tersimpan, sementara data dikeluarkan dari peta aktif dan kandidat penugasan. Daftar arsip dapat dibuka melalui Lihat arsip.
+
+Validasi server menolak plat duplikat termasuk dalam arsip, nilai kondisi di luar rentang, penggantian plat dengan riwayat perjalanan, perubahan saat bertugas atau bergerak, pengarsipan data terikat RTO, serta pengarsipan pengemudi yang masih direferensikan armada aktif. Penyimpanan baru memakai kunci idempotensi. Perubahan dan pengarsipan memeriksa versi record agar tab dengan data lama tidak menimpa perubahan baru.
+
+Penyimpanan tetap JSON lokal, belum MySQL. Menjalankan MySQL atau Docker saja tidak memindahkan data aplikasi. Migrasi memerlukan schema, transaksi, constraint, adaptor akses data dan pengujian dengan database tersebut. Lihat [catatan database](docs/database-readiness.md).
+
+## Safety teknis dan histori kondisi
+
+Halaman Health dan safety menampilkan distribusi indeks kendaraan, estimasi rem, distribusi skor pengemudi dan rekap kejadian kumulatif. Setiap detail kendaraan/pengemudi memuat parameter teknis, penjelasan ambang penugasan, tren, tabel riwayat dengan pagination dan ekspor CSV untuk rentang 7, 30 atau 90 hari.
+
+Riwayat disimpan pada `safetyHistory` melalui API dan filesystem lokal yang sama. Saat data lama pertama kali dibaca, aplikasi membuat baseline pada waktu pemantauan diaktifkan. Tidak ada catatan tanggal lampau yang dibuat-buat. Perubahan parameter master dan pemeriksaan manual menambahkan snapshot baru; refresh biasa tidak menggandakan snapshot. Histori tetap mempertahankan nilai sebelumnya.
+
+Tombol Catat pemeriksaan membuat snapshot simulasi dengan catatan tindak lanjut. Backend memvalidasi rentang, mencegah odometer dan hitungan kejadian kumulatif menurun, memeriksa versi data dan deduplikasi retry. Estimasi rem di bawah 30 persen memindahkan kendaraan ke status perlu servis; kondisi yang membaik tidak otomatis melepaskan status tersebut. Data safety bukan pembacaan sensor, diagnosis tersertifikasi atau formula prediksi berbasis ECU.
+
+## Profil operator
+
+Profil operator tersedia di `/dashboard/profile` melalui akun di topbar atau bagian bawah sidebar. Menu Pengaturan terpisah telah dihapus; URL lama `/dashboard/settings` mengarahkan ke Profil. Nama, email kontak dan nomor telepon dapat diedit dan disimpan melalui API dengan validasi server serta pemeriksaan versi. Nama dan inisial di sidebar/topbar mengikuti profil tersimpan.
+
+MVP menyediakan satu akun operator demo bersama dan akun terdaftar dengan profil masing-masing. Email kontak bukan kredensial login; pengeditan profil tidak mengubah peran akses atau kata sandi. Identitas profil tetap tersimpan setelah refresh dan masuk kembali.
+
+## Register dan login akun operator
+
+Halaman `/register` dapat dibuka dari tautan Daftar sekarang pada Login. Form meminta nama lengkap, email, kata sandi 12 sampai 128 karakter dan konfirmasi kata sandi. Pendaftaran berhasil langsung membuat sesi dan membuka dashboard. Akun dapat digunakan untuk login ulang melalui `/login`.
+
+Akun disimpan di `.data/accounts.json` dengan email login unik yang dinormalisasi, salt acak dan hash scrypt. Kata sandi asli tidak disimpan. Sesi ditandatangani server dan memakai cookie HttpOnly. Tetapkan SESSION_SECRET di server agar sesi tidak hilang ketika proses Node restart. File akun tetap tersedia setelah restart.
+
+Profil terdaftar disimpan per akun. Mengubah email kontak di Profil tidak mengubah email login. Data armada dan modul operasional masih memakai workspace prototipe bersama; pendaftaran bukan pembuatan tenant baru. Akun demo masih dapat dibuka melalui Buka dashboard demo.
+
+Belum ada verifikasi email, lupa kata sandi atau undangan organisasi. Gunakan penyimpanan database, pembatasan percobaan autentikasi, dan pengelolaan identitas yang sesuai sebelum penggunaan produksi.
+
+Geometri OSRM ikut disimpan bersama penugasan baru dan ditampilkan pada detail perjalanan. Penugasan lama yang belum memiliki geometri dilengkapi melalui `/api/trips/[id]/route` berdasarkan urutan titik tersimpan, tanpa mengubah jarak dan durasi historis.

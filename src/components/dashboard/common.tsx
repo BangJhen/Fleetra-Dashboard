@@ -40,7 +40,6 @@ export function Status({ status }: { status: string }) {
         : "blue";
   return (
     <Badge variant="outline" className={`status ${tone}`}>
-      <span className="status-dot" />
       {statusLabel[status] || status}
     </Badge>
   );
@@ -125,15 +124,6 @@ export function Initials({ name }: { name: string }) {
         .map((n) => n[0])
         .join("")}
     </span>
-  );
-}
-export function DemoNote({ children }: { children?: React.ReactNode }) {
-  return (
-    <p className="demo-note">
-      <span className="demo-square" />
-      {children ||
-        "Data simulasi MVP. Tidak terhubung ke sensor atau layanan produksi."}
-    </p>
   );
 }
 export function ExportButton({

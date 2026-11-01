@@ -1,3 +1,6 @@
+import { demoVehicleModels } from "./vehicle-types";
+import { defaultOperatorProfile } from "./operator-profile";
+import { ensureDemoEtle } from "./etle-demo";
 import type { FleetState, Stop, Vehicle } from "./types";
 export const locations = [
   {
@@ -84,7 +87,7 @@ export function createSeed(): FleetState {
         i === 0
           ? "B 9821 KCE"
           : `${i % 3 === 0 ? "B" : "D"} ${2100 + i * 17} ${["FTR", "KCE", "AFD", "BGT"][i % 4]}`,
-      model: ["Daihatsu Gran Max", "Suzuki Carry", "Mitsubishi L300"][i % 3],
+      ...demoVehicleModels[i % demoVehicleModels.length],
       status: i < 88 ? "moving" : i < 120 ? "idle" : "service",
       driverId: `d${i + 1}`,
       lat: p.lat + Math.sin(i * 2.5) * 0.016,
@@ -130,9 +133,11 @@ export function createSeed(): FleetState {
   // Completed seed trips intentionally have no fabricated proof assets.
   for (const t of trips.filter((t) => t.status === "completed"))
     t.stops.forEach((s) => (s.status = "delivered"));
-  return {
+  const state: FleetState = {
     vehicles,
     drivers,
+    safetyHistory: [],
+    operatorProfile: { ...defaultOperatorProfile },
     trips,
     contracts: [
       {
@@ -189,4 +194,6 @@ export function createSeed(): FleetState {
     ],
     updatedAt: now.toISOString(),
   };
+  ensureDemoEtle(state);
+  return state;
 }

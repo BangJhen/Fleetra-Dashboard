@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useFleet } from "./provider";
 import { FleetMap } from "./map-loader";
+import { VehicleArt } from "./vehicle-art";
+import { vehicleType, vehicleTypeLabels } from "@/lib/vehicle-types";
 import { Icon } from "./icons";
 import { Inspector } from "./inspector";
 import {
-  DemoNote,
   PageHeading,
   Status,
   time,
@@ -19,7 +20,12 @@ import {
 import { cn } from "@/lib/utils";
 import type { VehicleStatus } from "@/lib/types";
 export function Tracking() {
-  const data = useFleet((s) => s.data);
+  const stored = useFleet((s) => s.data);
+  const data = {
+    ...stored,
+    vehicles: stored.vehicles.filter((v) => !v.archivedAt),
+    drivers: stored.drivers.filter((d) => !d.archivedAt),
+  };
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<VehicleStatus | "all">("all");
   const [selected, setSelected] = useState<string | null>(null);
@@ -33,7 +39,7 @@ export function Tracking() {
   const vehicles = data.vehicles.filter(
     (v) =>
       (filter === "all" || v.status === filter) &&
-      `${v.plate} ${data.drivers.find((d) => d.id === v.driverId)?.name}`
+      `${v.plate} ${v.model} ${vehicleTypeLabels[vehicleType(v)]} ${data.drivers.find((d) => d.id === v.driverId)?.name}`
         .toLowerCase()
         .includes(query.toLowerCase()),
   );
@@ -52,10 +58,11 @@ export function Tracking() {
         </span>
         <ExportButton
           rows={[
-            ["Plat", "Model", "Status", "Pengemudi", "Bahan bakar"],
+            ["Plat", "Model", "Jenis kendaraan", "Status", "Pengemudi", "Bahan bakar"],
             ...vehicles.map((v) => [
               v.plate,
               v.model,
+              vehicleTypeLabels[vehicleType(v)],
               v.status,
               data.drivers.find((d) => d.id === v.driverId)?.name || "",
               v.fuel,
@@ -95,16 +102,15 @@ export function Tracking() {
           },
         ].map((m) => (
           <button
-            className={cn("metric", filter === m.status && "metric-selected")}
+            className={cn(
+              `metric metric-${m.tone}`,
+              filter === m.status && "metric-selected",
+            )}
             key={m.label}
             aria-pressed={filter === m.status}
             onClick={() => setFilter(m.status)}
           >
-            <span className="metric-label">
-              <i className={m.tone} />
-              {m.label}
-              <Icon name="arrow" />
-            </span>
+            <span className="metric-label">{m.label}</span>
             <strong>
               {m.value}
               <small>unit</small>
@@ -119,7 +125,6 @@ export function Tracking() {
           <span className="muted">{vehicles.length} unit ditampilkan</span>
         </div>
         <div className="tracking-gps">
-          <span className={cn("gps-dot", !playing && "paused")} />
           <span>Simulasi GPS {playing ? "aktif" : "dijeda"}</span>
           <span className="muted">{time(gpsAt)}</span>
           <Button
@@ -190,7 +195,7 @@ export function Tracking() {
                     onClick={() => setSelected(v.id)}
                   >
                     <span className="vehicle-row-icon">
-                      <Icon name="vehicles" />
+                      <VehicleArt vehicle={v} compact />
                     </span>
                     <span className="vehicle-row-info">
                       <strong>{v.plate}</strong>
@@ -199,16 +204,12 @@ export function Tracking() {
                     </span>
                     <span className="vehicle-row-right">
                       <Status status={v.status} />
-                      <small>{v.speed} km/jam</small>
+                      <small>{v.speed} km per jam</small>
                     </span>
                   </button>
                 );
               })
             )}
-          </div>
-          <div className="fleet-list-footer">
-            <span className="status-dot" />
-            Sumber data simulasi MVP
           </div>
         </div>
         <FleetMap
@@ -260,10 +261,6 @@ export function Tracking() {
           <Icon name="arrow" />
         </Link>
       </div>
-      <DemoNote>
-        Data seed untuk demonstrasi. Posisi GPS bergerak setiap 5 detik selama
-        simulasi aktif.
-      </DemoNote>
       <Inspector id={selected} onClose={() => setSelected(null)} />
     </div>
   );

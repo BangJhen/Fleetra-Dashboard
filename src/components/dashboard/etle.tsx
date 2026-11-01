@@ -19,7 +19,6 @@ import {
   BackLink,
   PageHeading,
   Status,
-  DemoNote,
   EmptyState,
   date,
   time,
@@ -87,7 +86,7 @@ export function Etle({ id }: { id?: string }) {
         </BackLink>
         <PageHeading
           title={record.reference}
-          description={`${record.plate} / ${date(record.at)} / ${time(record.at)}`}
+          description={`${record.plate} pada ${date(record.at)} pukul ${time(record.at)}`}
         >
           <Status status={record.status} />
         </PageHeading>
@@ -111,7 +110,7 @@ export function Etle({ id }: { id?: string }) {
             </div>
             <div>
               <dt>Sumber tilang</dt>
-              <dd>Input manual operator</dd>
+              <dd>{record.source === "simulasi" ? "Contoh simulasi FLEETRA" : "Input manual operator"}</dd>
             </div>
           </dl>
           {record.candidates.map((tid) => {
@@ -127,7 +126,7 @@ export function Etle({ id }: { id?: string }) {
                   <small>Kandidat perjalanan</small>
                   <strong>{t?.code}</strong>
                   <p>
-                    {d?.name} / {t?.startedAt && time(t.startedAt)}
+                    {d?.name} mulai {t?.startedAt && time(t.startedAt)}
                   </p>
                 </div>
                 <Icon name="arrow" />
@@ -151,10 +150,6 @@ export function Etle({ id }: { id?: string }) {
               </Button>
             )}
           </div>
-          <DemoNote>
-            Kecocokan waktu tidak membuktikan pelanggaran hukum. Tidak ada akses
-            ke API ETLE pemerintah.
-          </DemoNote>
         </section>
       </div>
     );
@@ -170,9 +165,8 @@ export function Etle({ id }: { id?: string }) {
           <div className="section-heading">
             <div>
               <h2>Cek data perjalanan</h2>
-              <p>Masukkan informasi dari surat tilang.</p>
+              <p>Cocokkan plat dan waktu kejadian dengan perjalanan armada.</p>
             </div>
-            <Icon name="search" />
           </div>
           <form onSubmit={submit}>
             <div className="form-field">
@@ -181,7 +175,7 @@ export function Etle({ id }: { id?: string }) {
                 id="reference"
                 maxLength={100}
                 required
-                placeholder="Contoh ETLE-2026-001"
+                placeholder="Contoh BDG ETLE 2026 004"
                 value={reference}
                 onChange={(e) => setReference(e.target.value)}
               />
@@ -206,14 +200,13 @@ export function Etle({ id }: { id?: string }) {
                 value={at}
                 onChange={(e) => setAt(e.target.value)}
               />
-              <small>Gunakan waktu Indonesia Barat (WIB).</small>
             </div>
             <div className="form-field">
               <Label htmlFor="camera">Lokasi kamera</Label>
               <Input
                 id="camera"
                 maxLength={200}
-                placeholder="Opsional, nama ruas jalan"
+                placeholder="Nama ruas jalan atau lokasi kamera"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
               />
@@ -228,16 +221,12 @@ export function Etle({ id }: { id?: string }) {
               <Icon name="arrow" />
             </Button>
           </form>
-          <DemoNote>
-            Rekonsiliasi internal berdasarkan data simulasi. Tanpa integrasi
-            ETLE resmi.
-          </DemoNote>
         </section>
         <section className="content-panel etle-cases">
           <div className="section-heading">
             <div>
               <h2>Kasus tersimpan</h2>
-              <p>{data.etle.length} kasus dalam workspace</p>
+              <p>{data.etle.length} kasus untuk ditinjau</p>
             </div>
           </div>
           {data.etle.length === 0 ? (
@@ -249,13 +238,13 @@ export function Etle({ id }: { id?: string }) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Referensi & armada</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead />
+                  <TableHead>Referensi dan armada</TableHead>
+                  <TableHead>Kejadian</TableHead>
+                  <TableHead>Hasil pencocokan</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.etle.map((e) => (
+                {data.etle.toSorted((a, b) => Date.parse(b.at) - Date.parse(a.at)).map((e) => (
                   <TableRow key={e.id}>
                     <TableCell>
                       <Link
@@ -264,34 +253,23 @@ export function Etle({ id }: { id?: string }) {
                       >
                         {e.reference}
                       </Link>
-                      <small className="table-secondary">{e.plate}</small>
+                      <small className="table-secondary">{e.plate}{e.source === "simulasi" ? "  Simulasi" : ""}</small>
                     </TableCell>
                     <TableCell>
-                      <Status status={e.status} />
+                      <span>{date(e.at)} pukul {time(e.at)}</span>
+                      <small className="table-secondary">{e.location}</small>
                     </TableCell>
                     <TableCell>
-                      <Button size="icon" variant="ghost" asChild>
-                        <Link
-                          aria-label={`Buka ${e.reference}`}
-                          href={`/dashboard/finance/etle/${e.id}`}
-                        >
-                          <Icon name="chevron" />
-                        </Link>
-                      </Button>
+                      <span className="etle-case-status">
+                        <Status status={e.status} />
+                        <small>{e.candidates.length} kandidat perjalanan</small>
+                      </span>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           )}
-          <div className="etle-method">
-            <h3>Bagaimana pencocokan bekerja</h3>
-            <ol>
-              <li>Temukan kendaraan dari plat yang dimasukkan.</li>
-              <li>Periksa waktu mulai dan selesai perjalanan.</li>
-              <li>Tampilkan kandidat untuk pemeriksaan operator.</li>
-            </ol>
-          </div>
         </section>
       </div>
     </div>

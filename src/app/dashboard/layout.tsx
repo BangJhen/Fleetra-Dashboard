@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { isAuthenticated } from "@/lib/auth";
-import { getState } from "@/lib/store";
+import { sessionUserId } from "@/lib/auth";
+import { dashboardState } from "@/lib/dashboard-state";
 import { FleetProvider } from "@/components/dashboard/provider";
 import { Shell } from "@/components/dashboard/shell";
 export default async function Layout({
@@ -8,8 +8,9 @@ export default async function Layout({
 }: {
   children: React.ReactNode;
 }) {
-  if (!(await isAuthenticated())) redirect("/login");
-  const initial = await getState();
+  const userId = await sessionUserId();
+  if (!userId) redirect("/login");
+  const initial = await dashboardState(userId);
   return (
     <FleetProvider initial={initial}>
       <Shell>{children}</Shell>

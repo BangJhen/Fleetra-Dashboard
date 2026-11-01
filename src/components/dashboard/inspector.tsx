@@ -9,7 +9,9 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useFleet } from "./provider";
-import { Status, Initials, DemoNote } from "./common";
+import { Status, Initials } from "./common";
+import { VehicleArt } from "./vehicle-art";
+import { vehicleType, vehicleTypeLabels } from "@/lib/vehicle-types";
 import { Icon } from "./icons";
 export function Inspector({
   id,
@@ -36,50 +38,17 @@ export function Inspector({
           <SheetDescription>Inspeksi armada</SheetDescription>
           <SheetTitle>{v?.plate}</SheetTitle>
         </SheetHeader>
-        {v && d && (
+        {v && (
           <div className="inspector-body">
             <div className="vehicle-illustration">
-              <svg viewBox="0 0 250 110" fill="none" aria-hidden="true">
-                <path
-                  d="M29 38h125v47H29z"
-                  fill="#EAF3FF"
-                  stroke="#2463D8"
-                  strokeWidth="2"
-                />
-                <path
-                  d="M154 51h31l30 23v11h-61V51Z"
-                  fill="#F1F5F9"
-                  stroke="#64748B"
-                  strokeWidth="2"
-                />
-                <path d="M165 57h17l21 17h-38V57Z" fill="#DDEAF8" />
-                <circle
-                  cx="63"
-                  cy="86"
-                  r="14"
-                  fill="#fff"
-                  stroke="#64748B"
-                  strokeWidth="3"
-                />
-                <circle cx="63" cy="86" r="5" fill="#CBD5E1" />
-                <circle
-                  cx="185"
-                  cy="86"
-                  r="14"
-                  fill="#fff"
-                  stroke="#64748B"
-                  strokeWidth="3"
-                />
-                <circle cx="185" cy="86" r="5" fill="#CBD5E1" />
-                <path d="M47 54h60M47 62h42" stroke="#2463D8" strokeWidth="2" />
-              </svg>
+              <VehicleArt vehicle={v} />
             </div>
             <div className="inspector-model">
-              <h3>{v.model}</h3>
+              <div><h3>{v.model}</h3><small className="vehicle-type-label">{vehicleTypeLabels[vehicleType(v)]}</small></div>
               <Status status={v.status} />
             </div>
             <p className="muted">{v.location}</p>
-            <div className="inspector-driver">
+            {d ? <div className="inspector-driver">
               <Initials name={d.name} />
               <div>
                 <small>Pengemudi aktif</small>
@@ -92,6 +61,7 @@ export function Inspector({
                 <Icon name="chevron" />
               </Link>
             </div>
+            : <p className="muted inspector-driver">Pengemudi belum ditetapkan</p>}
             <h3 className="subsection-label">Telemetri kendaraan</h3>
             <div className="telemetry-grid">
               {[
@@ -99,7 +69,7 @@ export function Inspector({
                   icon: "speed" as const,
                   label: "Kecepatan",
                   value: v.speed,
-                  unit: "km/jam",
+                  unit: "km per jam",
                 },
                 {
                   icon: "fuel" as const,
@@ -130,9 +100,6 @@ export function Inspector({
                 </div>
               ))}
             </div>
-            <DemoNote>
-              Telemetri dan estimasi kondisi menggunakan data simulasi.
-            </DemoNote>
             {trip && (
               <div className="inspector-trip">
                 <small>Penugasan aktif</small>
@@ -155,7 +122,7 @@ export function Inspector({
                 <Icon name="arrow" />
               </Link>
             </Button>
-            {d.phone ? (
+            {d?.phone ? (
               <Button asChild variant="outline" className="full-width">
                 <a href={`tel:${d.phone}`}>
                   <Icon name="phone" />

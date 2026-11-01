@@ -1,19 +1,11 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useFleet } from "./provider";
-import {
-  PageHeading,
-  DemoNote,
-  EmptyState,
-  Initials,
-  date,
-  time,
-} from "./common";
+import { PageHeading, EmptyState, date, time } from "./common";
 import { Icon } from "./icons";
 export function Notifications() {
   const data = useFleet((s) => s.data);
@@ -98,11 +90,13 @@ export function Notifications() {
               <div className="notice-content">
                 <div>
                   <h2>{n.title}</h2>
-                  {n.status === "unread" && <span className="unread-dot" />}
+                  {n.status === "unread" && (
+                    <span className="notice-new-label">Baru</span>
+                  )}
                 </div>
                 <p>{n.description}</p>
                 <small>
-                  {date(n.at)} / {time(n.at)}
+                  {date(n.at)} pukul {time(n.at)}
                 </small>
                 <div className="notice-actions">
                   <Button variant="link" asChild>
@@ -148,80 +142,6 @@ export function Notifications() {
             </article>
           ))
         )}
-      </section>
-      <DemoNote>
-        SOS belum terhubung ke Mobile. Tidak ada pengiriman petugas atau
-        panggilan darurat otomatis.
-      </DemoNote>
-    </div>
-  );
-}
-export function Settings() {
-  const router = useRouter();
-  const [busy, setBusy] = useState(false);
-  async function logout() {
-    setBusy(true);
-    try {
-      const res = await fetch("/api/auth", { method: "DELETE" });
-      if (!res.ok) throw Error();
-      router.push("/login");
-      router.refresh();
-    } catch {
-      toast.error("Tidak dapat keluar. Coba lagi.");
-      setBusy(false);
-    }
-  }
-  return (
-    <div className="page">
-      <PageHeading
-        title="Pengaturan akun"
-        description="Informasi akses dan preferensi workspace Anda."
-      />
-      <section className="content-panel settings-panel">
-        <div className="section-heading">
-          <h2>Profil operator</h2>
-        </div>
-        <div className="settings-profile">
-          <Initials name="Fleet Manager" />
-          <div>
-            <h3>Fleet Manager</h3>
-            <p>manager@fleetra.demo</p>
-          </div>
-        </div>
-        <dl className="review-details">
-          <div>
-            <dt>Peran aktif</dt>
-            <dd>Fleet Manager / akun demo</dd>
-          </div>
-          <div>
-            <dt>Workspace</dt>
-            <dd>FLEETRA Operations</dd>
-          </div>
-          <div>
-            <dt>Wilayah operasi</dt>
-            <dd>Bandung Raya</dd>
-          </div>
-          <div>
-            <dt>Zona waktu</dt>
-            <dd>Waktu Indonesia Barat (UTC+7)</dd>
-          </div>
-          <div>
-            <dt>Tampilan</dt>
-            <dd>Light mode</dd>
-          </div>
-          <div>
-            <dt>Masa sesi</dt>
-            <dd>8 jam setelah masuk</dd>
-          </div>
-        </dl>
-        <DemoNote>
-          Satu akun demo memiliki akses seluruh modul. RBAC produksi belum
-          diaktifkan.
-        </DemoNote>
-        <Button variant="outline" onClick={logout} disabled={busy}>
-          <Icon name="logout" />
-          {busy ? "Keluar dari workspace" : "Keluar dari akun"}
-        </Button>
       </section>
     </div>
   );

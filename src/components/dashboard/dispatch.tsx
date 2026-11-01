@@ -19,7 +19,6 @@ import {
   Status,
   Initials,
   EmptyState,
-  DemoNote,
   time,
 } from "./common";
 import { Icon } from "./icons";
@@ -45,7 +44,7 @@ export function Dispatch() {
   return (
     <div className="page">
       <PageHeading
-        title="Dispatch & trips"
+        title="Dispatch dan trips"
         description="Rencanakan penugasan dan ikuti progres setiap pengantaran."
       >
         <Button asChild>
@@ -119,7 +118,7 @@ export function Dispatch() {
                     <Icon name="filter" />
                   </button>
                 </TableHead>
-                <TableHead>Pengemudi & armada</TableHead>
+                <TableHead>Pengemudi dan armada</TableHead>
                 <TableHead>Progres titik</TableHead>
                 <TableHead>Dibuat</TableHead>
                 <TableHead>Status</TableHead>
@@ -202,13 +201,8 @@ export function Dispatch() {
         )}
         <div className="table-footer">
           Menampilkan {trips.length} dari {data.trips.length} penugasan
-          <span>Data simulasi MVP</span>
         </div>
       </section>
-      <DemoNote>
-        Penugasan tersimpan pada server lokal. Sinkronisasi Mobile memerlukan
-        integrasi API.
-      </DemoNote>
     </div>
   );
 }
