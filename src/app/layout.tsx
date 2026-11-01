@@ -17,7 +17,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id">
-      <body>
+      <body suppressHydrationWarning>
         <a href="#main-content" className="skip-link">
           Lewati ke konten
         </a>
