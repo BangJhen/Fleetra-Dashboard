@@ -21,7 +21,8 @@ describe("Safety history consistency", () => {
   });
   it("retains historical values on master changes and appends only changed entities", () => {
     const s = createSeed();
-    captureSafety(s);
+    const t0 = new Date(Date.now() - 1000).toISOString();
+    captureSafety(s, "baseline", "", t0);
     const old = s.vehicles[0].health;
     s.vehicles[0].health = 82;
     captureSafety(s);

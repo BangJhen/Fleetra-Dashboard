@@ -13,7 +13,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useFleet } from "./provider";
-import { locations } from "@/lib/seed";
 import { availableResources } from "@/lib/domain";
 import { FleetMap } from "./map-loader";
 import { BackLink, PageHeading } from "./common";
@@ -27,13 +26,14 @@ type Optimized = {
 };
 export function Planner() {
   const data = useFleet((s) => s.data);
+  const locations = data.locations;
   const mutate = useFleet((s) => s.mutate);
   const router = useRouter();
-  const [stops, setStops] = useState([0, 1, 2, 3]);
+  const [stops, setStops] = useState(() => data.locations.slice(0, 4).map((_, index) => index));
   const [vehicleId, setVehicle] = useState("");
   const [driverId, setDriver] = useState("");
   const [attempt, setAttempt] = useState(0);
-  const requestKey = `${stops.join(",")}:${attempt}`;
+  const requestKey = `${stops.map((index) => `${index}:${locations[index]?.lat}:${locations[index]?.lng}`).join(",")}:${attempt}`;
   const [routing, setRouting] = useState<{
     key: string; status: "pending" | "ready" | "error";
     result?: Optimized; error?: string;
@@ -244,7 +244,6 @@ export function Planner() {
             <FleetMap
               points={points}
               route={optimized?.route}
-              playing={false}
             />
             <div className="route-estimates">
               <div>

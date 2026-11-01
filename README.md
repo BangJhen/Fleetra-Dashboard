@@ -4,7 +4,7 @@ MVP pusat kendali armada untuk ADIKARA 2026. Implementasi mengikuti `FLEETRA_Web
 
 ## Menjalankan
 
-Gunakan Node.js 22.13 atau lebih baru dan npm.
+Gunakan Node.js 22.13 atau lebih baru, npm, dan MariaDB lokal. Siapkan skema dan data awal satu kali sesuai [panduan database](database/README.md), lalu jalankan:
 
 ```bash
 npm install
@@ -25,13 +25,13 @@ npm start
 - Leaflet dan React Leaflet, basemap vektor MapLibre dan OpenFreeMap, optimasi OSRM.
 - Zustand store per provider, server components untuk memuat data awal.
 - Font Inter dan Plus Jakarta Sans dibundel lokal, tanpa ketergantungan Google Fonts saat runtime.
-- Route Handler Next.js dan penyimpanan JSON atomik untuk prototipe satu proses Node.
+- Route Handler Next.js dan MariaDB melalui koneksi server menggunakan `mysql2`.
 
 ## Modul yang tersedia
 
 | Modul           | Perilaku                                                                                                                                                      |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Live tracking   | 142 kendaraan seed, filter status, pencarian plat/pengemudi, heading marker, simulasi GPS 5 detik, jeda, zoom, pusatkan peta, panel telemetri dan ekspor CSV. |
+| Live tracking   | Posisi armada dari database, filter status, pencarian, heading marker, zoom, panel telemetri dan ekspor CSV. |
 | Dispatch        | Daftar dan filter trip, multi-stop, optimasi OSRM, tinjauan alokasi, validasi konflik di server, idempotency saat retry, detail dan bukti e-POD per stop.     |
 | Health & safety | Indeks kondisi dari snapshot seed, daftar prioritas, blok armada servis, leaderboard dan detail pengemudi.                                                    |
 | RTO             | Kontrak kemitraan, ekuitas dari saldo awal dan ledger, tautan ke sumber trip, setoran simulasi satu kali setelah seluruh stop selesai.                        |
@@ -40,11 +40,11 @@ npm start
 
 ## Data dan batasan MVP
 
-Data seed dibaca melalui API, bukan angka yang ditulis terpisah di UI. Distribusi awal kendaraan adalah 88 bergerak, 32 idle, dan 22 servis. Semua data ditandai simulasi. Pickup dihitung sebagai satu titik singgah; jumlah pengantaran ditampilkan terpisah. Skor kondisi dan safety merupakan snapshot seed, bukan diagnosis sensor.
+Data awal merupakan simulasi dan dibaca dari database melalui API. Distribusi seed awal kendaraan adalah 88 bergerak, 32 idle, dan 22 servis; nilainya dapat berubah setelah data diperbarui. Pickup dihitung sebagai satu titik singgah; jumlah pengantaran ditampilkan terpisah. Skor kondisi dan safety berasal dari snapshot, bukan diagnosis sensor.
 
-Data disimpan di `.data/fleetra.json`, diabaikan Git, dan bertahan setelah refresh atau restart server. `FLEETRA_DATA_DIR` dapat mengubah lokasi penyimpanan. Penyimpanan lokal ini ditujukan untuk satu proses Node dengan filesystem yang persisten. Gunakan PostgreSQL/Supabase dan transaksi database sebelum menjalankan banyak instance, serverless, atau operasi produksi. Tidak ada klaim koneksi Supabase, ETLE pemerintah, bank, escrow, atau GPS fisik.
+Data operasional dan akun disimpan pada tabel MariaDB. API Next.js mengakses database dari server; browser tidak menerima kredensial database. Berkas JSON lama tidak dihapus dan dapat digunakan sebagai sumber seed pertama. Akun demo, data telemetri, ETLE, dan RTO tetap simulasi, tanpa koneksi sensor fisik atau layanan resmi.
 
-GPS simulasi berjalan di browser, tidak menulis pembacaan sensor ke database. Sinkronisasi perubahan API memakai polling setiap 15 detik dan refetch saat reconnect/focus. Peta dan OSRM memerlukan internet. Kegagalan tile tidak menutup daftar armada. Kegagalan OSRM memberi pesan dan mengizinkan rute manual; jarak dan durasi manual ditampilkan belum dihitung. Estimasi OSRM tidak mencakup kemacetan atau bongkar muat.
+Posisi pada peta dibaca dari kolom kendaraan di database; aplikasi belum menerima pembaruan GPS fisik. Sinkronisasi API memakai polling setiap 15 detik dan refetch saat reconnect/focus. Peta dan OSRM memerlukan internet. Kegagalan tile tidak menutup daftar armada. Kegagalan OSRM memberi pesan dan mengizinkan rute manual; jarak dan durasi manual ditampilkan belum dihitung. Estimasi OSRM tidak mencakup kemacetan atau bongkar muat.
 
 Aplikasi `Fleetra-Mobile` yang ada masih memakai state lokal dan tidak diubah oleh implementasi ini. Endpoint integrasi tersedia, tetapi pemasangan client API di Mobile tetap diperlukan untuk penggunaan lintas perangkat. Lihat [kontrak API Mobile](docs/mobile-api.md).
 
@@ -85,13 +85,13 @@ Halaman Data armada dan Data pengemudi mendukung tambah, baca, ubah, arsipkan da
 
 Validasi server menolak plat duplikat termasuk dalam arsip, nilai kondisi di luar rentang, penggantian plat dengan riwayat perjalanan, perubahan saat bertugas atau bergerak, pengarsipan data terikat RTO, serta pengarsipan pengemudi yang masih direferensikan armada aktif. Penyimpanan baru memakai kunci idempotensi. Perubahan dan pengarsipan memeriksa versi record agar tab dengan data lama tidak menimpa perubahan baru.
 
-Penyimpanan tetap JSON lokal, belum MySQL. Menjalankan MySQL atau Docker saja tidak memindahkan data aplikasi. Migrasi memerlukan schema, transaksi, constraint, adaptor akses data dan pengujian dengan database tersebut. Lihat [catatan database](docs/database-readiness.md).
+Perubahan master disimpan ke tabel MariaDB dengan transaksi dan pemeriksaan versi. Lihat [catatan database](docs/database-readiness.md).
 
 ## Safety teknis dan histori kondisi
 
 Halaman Health dan safety menampilkan distribusi indeks kendaraan, estimasi rem, distribusi skor pengemudi dan rekap kejadian kumulatif. Setiap detail kendaraan/pengemudi memuat parameter teknis, penjelasan ambang penugasan, tren, tabel riwayat dengan pagination dan ekspor CSV untuk rentang 7, 30 atau 90 hari.
 
-Riwayat disimpan pada `safetyHistory` melalui API dan filesystem lokal yang sama. Saat data lama pertama kali dibaca, aplikasi membuat baseline pada waktu pemantauan diaktifkan. Tidak ada catatan tanggal lampau yang dibuat-buat. Perubahan parameter master dan pemeriksaan manual menambahkan snapshot baru; refresh biasa tidak menggandakan snapshot. Histori tetap mempertahankan nilai sebelumnya.
+Riwayat disimpan pada tabel snapshot kendaraan dan pengemudi. Saat seed dilakukan, data historis yang sudah ada dipertahankan dan baseline dibuat jika diperlukan. Perubahan master dan pemeriksaan manual menambahkan snapshot; refresh tidak menggandakannya.
 
 Tombol Catat pemeriksaan membuat snapshot simulasi dengan catatan tindak lanjut. Backend memvalidasi rentang, mencegah odometer dan hitungan kejadian kumulatif menurun, memeriksa versi data dan deduplikasi retry. Estimasi rem di bawah 30 persen memindahkan kendaraan ke status perlu servis; kondisi yang membaik tidak otomatis melepaskan status tersebut. Data safety bukan pembacaan sensor, diagnosis tersertifikasi atau formula prediksi berbasis ECU.
 
@@ -105,7 +105,7 @@ MVP menyediakan satu akun operator demo bersama dan akun terdaftar dengan profil
 
 Halaman `/register` dapat dibuka dari tautan Daftar sekarang pada Login. Form meminta nama lengkap, email, kata sandi 12 sampai 128 karakter dan konfirmasi kata sandi. Pendaftaran berhasil langsung membuat sesi dan membuka dashboard. Akun dapat digunakan untuk login ulang melalui `/login`.
 
-Akun disimpan di `.data/accounts.json` dengan email login unik yang dinormalisasi, salt acak dan hash scrypt. Kata sandi asli tidak disimpan. Sesi ditandatangani server dan memakai cookie HttpOnly. Tetapkan SESSION_SECRET di server agar sesi tidak hilang ketika proses Node restart. File akun tetap tersedia setelah restart.
+Akun disimpan di tabel `users` dengan email login unik yang dinormalisasi, salt acak dan hash scrypt. Kata sandi asli tidak disimpan. Sesi ditandatangani server dan memakai cookie HttpOnly. Tetapkan `SESSION_SECRET` di server untuk deployment.
 
 Profil terdaftar disimpan per akun. Mengubah email kontak di Profil tidak mengubah email login. Data armada dan modul operasional masih memakai workspace prototipe bersama; pendaftaran bukan pembuatan tenant baru. Akun demo masih dapat dibuka melalui Buka dashboard demo.
 

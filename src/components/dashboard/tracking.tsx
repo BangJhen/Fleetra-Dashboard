@@ -1,7 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useFleet } from "./provider";
 import { FleetMap } from "./map-loader";
@@ -21,6 +20,7 @@ import { cn } from "@/lib/utils";
 import type { VehicleStatus } from "@/lib/types";
 export function Tracking() {
   const stored = useFleet((s) => s.data);
+  const refreshed = useFleet((s) => s.refreshed);
   const data = {
     ...stored,
     vehicles: stored.vehicles.filter((v) => !v.archivedAt),
@@ -29,13 +29,6 @@ export function Tracking() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<VehicleStatus | "all">("all");
   const [selected, setSelected] = useState<string | null>(null);
-  const [playing, setPlaying] = useState(true);
-  const [gpsAt, setGpsAt] = useState(data.updatedAt);
-  useEffect(() => {
-    if (!playing) return;
-    const t = setInterval(() => setGpsAt(new Date().toISOString()), 5000);
-    return () => clearInterval(t);
-  }, [playing]);
   const vehicles = data.vehicles.filter(
     (v) =>
       (filter === "all" || v.status === filter) &&
@@ -125,18 +118,8 @@ export function Tracking() {
           <span className="muted">{vehicles.length} unit ditampilkan</span>
         </div>
         <div className="tracking-gps">
-          <span>Simulasi GPS {playing ? "aktif" : "dijeda"}</span>
-          <span className="muted">{time(gpsAt)}</span>
-          <Button
-            variant="outline"
-            size="icon"
-            aria-label={
-              playing ? "Jeda simulasi GPS" : "Lanjutkan simulasi GPS"
-            }
-            onClick={() => setPlaying((p) => !p)}
-          >
-            <Icon name={playing ? "pause" : "play"} />
-          </Button>
+          <span>Sinkronisasi lokasi</span>
+          <span className="muted">{time(refreshed)}</span>
         </div>
       </div>
       <section className="tracking-panel" aria-label="Peta dan daftar armada">
@@ -216,7 +199,6 @@ export function Tracking() {
           vehicles={vehicles}
           selected={selected || undefined}
           onSelect={setSelected}
-          playing={playing}
         />
       </section>
       <div className="operations-summary">

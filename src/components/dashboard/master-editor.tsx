@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { vehicleType, vehicleTypes, vehicleTypeLabels } from "@/lib/vehicle-types";
-import { locations } from "@/lib/seed";
 import type { Driver, Vehicle } from "@/lib/types";
 import { useFleet } from "./provider";
 export function MasterEditor({
@@ -26,6 +25,7 @@ export function MasterEditor({
   onClose: () => void;
 }) {
   const data = useFleet((s) => s.data);
+  const locations = data.locations;
   const mutate = useFleet((s) => s.mutate);
   const vehicle = kind === "vehicles";
   const v = record as Vehicle | undefined;

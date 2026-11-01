@@ -1,4 +1,5 @@
 import type { FleetState } from "./types";
+import { createHash } from "node:crypto";
 export interface MobileEvent {
   type:
     | "trip.started"
@@ -34,7 +35,8 @@ export function applyMobileEvent(
   if (event.type === "sos.sent") {
     if (!event.key || event.key.length > 100)
       throw Error("Kunci idempotensi SOS wajib diisi.");
-    const id = `sos-${driverId}-${event.key}`;
+    const rawId = `sos-${driverId}-${event.key}`;
+    const id = rawId.length <= 100 ? rawId : `sos-${createHash("sha256").update(rawId).digest("hex")}`;
     const exists = s.notices.find((n) => n.id === id);
     if (exists) return { id: exists.id };
     if (!["assigned", "in_progress"].includes(trip.status))

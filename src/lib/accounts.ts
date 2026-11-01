@@ -3,6 +3,8 @@ import { mkdir, readFile, writeFile, rename } from "node:fs/promises";
 import path from "node:path";
 import { randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 import type { OperatorProfile } from "./types";
+import { mysqlPool, isMysqlBackend } from "./mysql";
+import type { RowDataPacket } from "mysql2/promise";
 export interface RegisteredAccount {
   id: string;
   loginEmail: string;
@@ -32,6 +34,7 @@ function transaction<T>(
   fn: (users: RegisteredAccount[]) => Promise<T> | T,
   write = false,
 ): Promise<T> {
+  if (isMysqlBackend()) return mysqlAccountTransaction(fn, write);
   const task = (queues.get(file) || Promise.resolve()).then(async () => {
     const users = await read();
     const result = await fn(users);
@@ -47,6 +50,34 @@ function transaction<T>(
     task.catch(() => {}),
   );
   return task;
+}
+async function mysqlAccountTransaction<T>(
+  fn: (users: RegisteredAccount[]) => Promise<T> | T,
+  write: boolean,
+): Promise<T> {
+  const c = await mysqlPool().getConnection();
+  try {
+    await c.beginTransaction();
+    const [companies] = await c.query<RowDataPacket[]>(`SELECT id FROM companies WHERE slug='fleetra-demo'${write ? ' FOR UPDATE' : ''}`);
+    if (!companies[0]) throw Error("Database belum berisi data awal FLEETRA.");
+    const companyId = companies[0].id;
+    const [records] = await c.query<RowDataPacket[]>("SELECT * FROM users WHERE company_id=? AND external_id IS NOT NULL AND external_id <> 'demo'", [companyId]);
+    const users: RegisteredAccount[] = records.map((row) => {
+      const [salt, passwordHash] = String(row.password_hash).split(':');
+      return { id: row.external_id, loginEmail: row.email, salt, passwordHash, profile: { name: row.full_name, email: row.contact_email || row.email, phone: row.phone || '', version: row.version }, createdAt: new Date(String(row.created_at).replace(' ', 'T') + 'Z').toISOString() };
+    });
+    const before = structuredClone(users);
+    const result = await fn(users);
+    if (write) for (const user of users) {
+      const previous = before.find(item => item.id === user.id);
+      if (JSON.stringify(previous) === JSON.stringify(user)) continue;
+      if (previous) await c.execute('UPDATE users SET full_name=?,contact_email=?,phone=?,version=? WHERE company_id=? AND external_id=?', [user.profile.name,user.profile.email,user.profile.phone,user.profile.version,companyId,user.id]);
+      else await c.execute("INSERT INTO users (company_id,external_id,full_name,email,contact_email,phone,password_hash,role,version,created_at) VALUES (?,?,?,?,?,?,?,'dispatcher',?,?)", [companyId,user.id,user.profile.name,user.loginEmail,user.profile.email,user.profile.phone,`${user.salt}:${user.passwordHash}`,user.profile.version,new Date(user.createdAt).toISOString().replace('T',' ').replace('Z','')]);
+    }
+    await c.commit();
+    return result;
+  } catch (error) { await c.rollback(); throw error; }
+  finally { c.release(); }
 }
 function derive(password: string, salt: string) {
   return new Promise<Buffer>((resolve, reject) =>

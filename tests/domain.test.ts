@@ -168,4 +168,13 @@ describe("Mobile event and ledger integrity", () => {
     applyMobileEvent(s, "d1", e);
     assert.equal(s.notices.filter((n) => n.kind === "sos").length, 1);
   });
+  it("keeps long SOS idempotency keys within the database ID limit", () => {
+    const s = createSeed();
+    const event = { type: "sos.sent" as const, tripId: "trip-89", key: "x".repeat(100) };
+    const first = applyMobileEvent(s, "d1", event);
+    const second = applyMobileEvent(s, "d1", event);
+    assert.equal(first.id, second.id);
+    assert.ok(first.id.length <= 100);
+    assert.equal(s.notices.filter((n) => n.kind === "sos").length, 1);
+  });
 });

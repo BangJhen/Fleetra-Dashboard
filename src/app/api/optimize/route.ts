@@ -1,7 +1,7 @@
 import { sameOrigin } from "@/lib/request";
 import { NextRequest, NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
-import { locations } from "@/lib/seed";
+import { getState } from "@/lib/store";
 export async function POST(req: NextRequest) {
   if (!(await isAuthenticated()))
     return NextResponse.json({ error: "Sesi berakhir." }, { status: 401 });
@@ -11,6 +11,7 @@ export async function POST(req: NextRequest) {
       { status: 403 },
     );
   try {
+    const { locations } = await getState();
     const { stops } = await req.json();
     if (
       !Array.isArray(stops) ||

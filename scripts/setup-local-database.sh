@@ -29,6 +29,7 @@ printf '%s\n' 'Membuat database dan tabel. Database fleetra harus belum ada.'
   printf '%s\n' 'CREATE DATABASE fleetra CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;'
   printf '%s\n' 'USE fleetra;'
   cat "$schema_file"
+  cat "$project_dir/database/migrations/002_dashboard_mysql.sql"
   printf "CREATE USER 'fleetra_app'@'localhost' IDENTIFIED BY '%s';\n" "$app_password"
   printf '%s\n' "GRANT SELECT, INSERT, UPDATE, DELETE ON fleetra.* TO 'fleetra_app'@'localhost';"
 } | sudo mariadb --user=root --batch

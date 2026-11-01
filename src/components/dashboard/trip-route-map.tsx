@@ -30,7 +30,7 @@ export function TripRouteMap({ trip, vehicle }: { trip: Trip; vehicle?: Vehicle 
     return () => { active = false; controller.abort(); };
   }, [key, trip.id, trip.route]);
   return <div className="content-panel trip-map">
-    <FleetMap points={trip.stops} vehicles={vehicle ? [vehicle] : []} route={route} playing={false} />
+    <FleetMap points={trip.stops} vehicles={vehicle ? [vehicle] : []} route={route} />
     {!route && <div className="trip-route-status" role={error ? "alert" : "status"}>
       <span>{error || "Memuat rute OSRM"}</span>
       {error && <Button size="sm" variant="ghost" onClick={() => setAttempt(n => n + 1)}>Coba lagi</Button>}

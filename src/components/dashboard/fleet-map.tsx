@@ -135,28 +135,23 @@ export default function FleetMap({
   vehicles = [],
   selected,
   onSelect,
-  playing = true,
   route,
   points,
 }: {
   vehicles?: Vehicle[];
   selected?: string;
   onSelect?: (id: string) => void;
-  playing?: boolean;
   route?: [number, number][];
   points?: { lat: number; lng: number; name: string }[];
 }) {
-  const [tick, setTick] = useState(0);
   const [tileError, setTileError] = useState(false);
-  useEffect(() => {
-    if (!playing) return;
-    const id = setInterval(() => setTick((t) => t + 1), 5000);
-    return () => clearInterval(id);
-  }, [playing]);
+  const mappedVehicles = vehicles.filter((vehicle) => Number.isFinite(vehicle.lat) && Number.isFinite(vehicle.lng));
+  const firstPoint = points?.[0] || mappedVehicles[0];
+  const center: [number, number] = firstPoint ? [firstPoint.lat, firstPoint.lng] : [-6.909, 107.616];
   return (
     <div className="map-canvas">
       <MapContainer
-        center={[-6.909, 107.616]}
+        center={center}
         zoom={12}
         zoomControl={false}
         scrollWheelZoom
@@ -164,21 +159,19 @@ export default function FleetMap({
         className="leaflet-map"
       >
         <PlaceBasemap onError={setTileError} />
-        {vehicles.map((v) => {
+        {mappedVehicles.map((v) => {
           const color =
             v.status === "moving"
               ? "#2463D8"
               : v.status === "idle"
                 ? "#64748B"
                 : "#1E57C7";
-          const offset =
-            v.status === "moving" ? Math.sin(tick * 0.1) * 0.0004 : 0;
           return (
             <Marker
               key={v.id}
               title={v.plate}
               alt={v.plate}
-              position={[v.lat + offset, v.lng + offset]}
+              position={[v.lat, v.lng]}
               icon={L.divIcon({
                 className: `vehicle-map-marker ${selected === v.id ? "selected-marker" : ""}`,
                 html: `<div style="--marker-color:${color};transform:rotate(${v.heading}deg)"><svg width="16" height="20" viewBox="0 0 16 20" fill="none"><path d="M8 2 14 17 8 14 2 17 8 2Z" fill="currentColor" stroke="white" stroke-width="1.5"/></svg></div>`,
@@ -219,7 +212,7 @@ export default function FleetMap({
           </Marker>
         ))}
         <RouteFraming route={route} points={points} />
-        <Controls selected={selected} vehicles={vehicles} route={route} points={points} />
+        <Controls selected={selected} vehicles={mappedVehicles} route={route} points={points} />
         <MapSources />
       </MapContainer>
       {tileError && (

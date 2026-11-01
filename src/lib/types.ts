@@ -125,6 +125,8 @@ export interface OperatorProfile {
   version: number;
 }
 export interface FleetState {
+  workspace: { name: string; region: string };
+  locations: { name: string; address: string; lat: number; lng: number }[];
   operatorProfile: OperatorProfile;
   safetyHistory: SafetySnapshot[];
   vehicles: Vehicle[];

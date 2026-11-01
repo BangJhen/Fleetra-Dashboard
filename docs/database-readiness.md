@@ -1,18 +1,18 @@
 # CRUD dan kesiapan database
 
-Status 1 November 2026.
+Status 2 November 2026.
 
 ## Hasil verifikasi
 
 - Master armada dan pengemudi mendukung create, read, update, soft delete dan restore lewat UI dan API.
 - Pengujian browser mencakup penambahan, pengubahan, refresh, arsip, refresh arsip dan pemulihan kedua jenis master.
 - Tes domain mencakup duplikat plat, rentang angka, konflik penugasan, keterikatan RTO, referensi driver dan versi record yang kedaluwarsa.
-- Suite lengkap: 23 tes domain dan 12 tes browser lolos. TypeScript, ESLint dan build produksi lolos.
+- Tes domain dan alur browser mencakup operasi database, alokasi, safety, autentikasi, rute dan bukti pengiriman.
 - Trip, e-POD, ETLE dan ledger mengikuti aksi bisnisnya sendiri. Ledger dan bukti historis tidak memiliki penghapusan bebas oleh operator.
 
 ## Kondisi aktual
 
-Data masih disimpan pada file JSON lokal dengan antrean satu proses Node. Rancangan skema SQL tersedia di [`database/README.md`](../database/README.md), tetapi belum ada driver MySQL, migrasi data JSON, atau pengujian pada server MySQL. Akun demo terbuka tetap tersedia. Akun terdaftar mendukung login email dan kata sandi dengan hash scrypt serta profil per akun. Data armada masih berada dalam workspace prototipe bersama; konfigurasi demo harus ditinjau sebelum menyimpan data produksi atau mempublikasikan akses operasional.
+Data dashboard dan akun kini menggunakan MariaDB melalui adaptor server. Migrasi dan seed dari JSON, termasuk pemetaan ID, dijelaskan di [`database/README.md`](../database/README.md). Integrasi telah diuji pada MariaDB 11.7; pengujian langsung pada MySQL 8 belum dilakukan. Akun demo terbuka tetap tersedia dan seluruh akun masih berbagi workspace prototipe.
 
 ## Pilihan MySQL
 

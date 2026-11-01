@@ -169,7 +169,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               </SheetContent>
             </Sheet>
             <div className="topbar-page-context">
-              <span className="topbar-workspace">FLEETRA Operations</span>
+              <span className="topbar-workspace">{data.workspace.name}</span>
               <span className="breadcrumb-current">
                 {selected?.label ||
                   (pathname.includes("notifications")
@@ -177,7 +177,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                     : "Profil")}
               </span>
             </div>
-            <span className="topbar-region">Bandung Raya</span>
+            <span className="topbar-region">{data.workspace.region}</span>
           </div>
           <div className="topbar-right">
             <button

@@ -9,7 +9,6 @@ import { dashboardState } from "@/lib/dashboard-state";
 import { saveRegisteredProfile } from "@/lib/accounts";
 import { transact } from "@/lib/store";
 import { assertAllocation, matchTrips } from "@/lib/domain";
-import { locations } from "@/lib/seed";
 import type { Etle, Trip } from "@/lib/types";
 export const runtime = "nodejs";
 export async function GET() {
@@ -68,24 +67,28 @@ export async function POST(req: NextRequest) {
           body.stops.length < 2 ||
           body.stops.length > 20 ||
           body.stops.some(
-            (n: unknown) => typeof n !== "number" || !locations[n],
+            (n: unknown) => typeof n !== "number" || !s.locations[n],
           )
         )
           throw Error("Pilih gudang dan minimal satu tujuan yang valid.");
         if (new Set(body.stops).size !== body.stops.length)
           throw Error("Titik singgah tidak boleh berulang.");
         const route = validateRouteGeometry(body.route);
+        const year = new Date().getUTCFullYear();
+        const prefix = `TRIP-${year}-`;
+        const previousNumbers = s.trips.map((t) => t.code.startsWith(prefix) ? Number(t.code.slice(prefix.length)) : 0).filter(Number.isFinite);
+        const nextNumber = Math.max(0, ...previousNumbers) + 1;
         const trip: Trip = {
           ...(route ? { route, routeSource: "OSRM" as const } : {}),
           id: crypto.randomUUID(),
-          code: `TRIP-2026-${String(99 + s.trips.filter((t) => !t.key.startsWith("seed")).length).padStart(3, "0")}`,
+          code: `${prefix}${String(nextNumber).padStart(3, "0")}`,
           vehicleId: body.vehicleId,
           driverId: body.driverId,
           status: "assigned",
           createdAt: now,
           key: body.key,
           stops: body.stops.map((n: number, i: number) => ({
-            ...locations[n],
+            ...s.locations[n],
             id: crypto.randomUUID(),
             type: i === 0 ? "pickup" : "dropoff",
             status: "pending",

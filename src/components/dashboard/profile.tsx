@@ -127,6 +127,7 @@ function ProfileEditor({
   );
 }
 export function Profile() {
+  const workspace = useFleet((s) => s.data.workspace);
   const profile = useFleet(
     (s) => s.data.operatorProfile || defaultOperatorProfile,
   );
@@ -158,7 +159,6 @@ export function Profile() {
             <h3>{profile.name}</h3>
             <p>{profile.email}</p>
           </div>
-          <span className="profile-role">Fleet Manager</span>
         </div>
         <div className="profile-sections">
         <section className="profile-section">
@@ -183,11 +183,11 @@ export function Profile() {
           <dl className="profile-details">
           <div>
             <dt>Workspace</dt>
-            <dd>FLEETRA Operations</dd>
+            <dd>{workspace.name}</dd>
           </div>
           <div>
             <dt>Wilayah operasi</dt>
-            <dd>Bandung Raya</dd>
+            <dd>{workspace.region}</dd>
           </div>
           <div>
             <dt>Zona waktu</dt>

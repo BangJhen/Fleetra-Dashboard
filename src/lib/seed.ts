@@ -2,6 +2,7 @@ import { demoVehicleModels } from "./vehicle-types";
 import { defaultOperatorProfile } from "./operator-profile";
 import { ensureDemoEtle } from "./etle-demo";
 import type { FleetState, Stop, Vehicle } from "./types";
+export const defaultWorkspace = { name: "FLEETRA Operations", region: "Bandung Raya" };
 export const locations = [
   {
     name: "Gudang Logistik Cimahi",
@@ -134,6 +135,8 @@ export function createSeed(): FleetState {
   for (const t of trips.filter((t) => t.status === "completed"))
     t.stops.forEach((s) => (s.status = "delivered"));
   const state: FleetState = {
+    workspace: { ...defaultWorkspace },
+    locations: locations.map((location) => ({ ...location })),
     vehicles,
     drivers,
     safetyHistory: [],

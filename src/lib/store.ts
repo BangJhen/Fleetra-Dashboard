@@ -5,8 +5,10 @@ import { ensureDemoEtle } from "./etle-demo";
 import "server-only";
 import { mkdir, readFile, writeFile, rename } from "node:fs/promises";
 import path from "node:path";
-import { createSeed } from "./seed";
+import { createSeed, defaultWorkspace, locations } from "./seed";
 import type { FleetState } from "./types";
+import { mysqlTransact } from "./mysql-store";
+import { isMysqlBackend } from "./mysql";
 const directory = path.resolve(
   /* turbopackIgnore: true */
   process.cwd(),
@@ -23,6 +25,8 @@ async function read(): Promise<FleetState> {
     const state = JSON.parse(await readFile(file, "utf8")) as FleetState;
     const needsProfile = !state.operatorProfile;
     state.operatorProfile ??= { ...defaultOperatorProfile };
+    state.workspace ??= { ...defaultWorkspace };
+    state.locations ??= locations.map((location) => ({ ...location }));
     const changedTypes = migrateVehicleTypes(state.vehicles);
     const changedEtle = ensureDemoEtle(state);
     if (captureSafety(state, "master") || needsProfile || changedTypes || changedEtle) await save(state);
@@ -44,6 +48,7 @@ export function transact<T>(
   fn: (s: FleetState) => T | Promise<T>,
   write = true,
 ): Promise<T> {
+  if (isMysqlBackend()) return mysqlTransact(fn, write);
   const task = (queues.get(file) ?? Promise.resolve()).then(async () => {
     const s = await read();
     const result = await fn(s);

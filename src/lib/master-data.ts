@@ -2,7 +2,6 @@ import { inferVehicleType, vehicleTypes } from "./vehicle-types";
 import type { VehicleType } from "./types";
 import type { FleetState } from "./types";
 import { activeTrip } from "./domain";
-import { locations } from "./seed";
 export type MasterKind = "vehicles" | "drivers";
 export type MasterRequest = {
   action: "master-save" | "master-archive" | "master-restore";
@@ -169,10 +168,10 @@ export function changeMaster(s: FleetState, b: MasterRequest) {
     if (
       typeof locationIndex !== "number" ||
       !Number.isInteger(locationIndex) ||
-      !locations[locationIndex]
+      !s.locations[locationIndex]
     )
       throw Error("Pilih lokasi simulasi yang valid.");
-    const location = locations[locationIndex];
+    const location = s.locations[locationIndex];
     const changes = {
       plate,
       model,
