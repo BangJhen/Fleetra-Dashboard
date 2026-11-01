@@ -233,7 +233,8 @@
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  overflow: hidden;
+  overflow: visible;
+  clip-path: none;
 }
 .brand img,
 .brand .brand-img {
@@ -2360,7 +2361,8 @@
   width: 140px;
   height: 28px;
   flex-shrink: 0;
-  overflow: hidden;
+  overflow: visible;
+  clip-path: none;
 }
 .login-brand > span {
   font-size: 11px;
@@ -3410,7 +3412,7 @@
 }
 
 .brand {
-  clip-path: inset(12px 0 0);
+  clip-path: none;
 }
 .workspace-switch strong {
   white-space: nowrap;
@@ -3703,7 +3705,7 @@
   height: 30px;
   margin: 0 6px 24px;
   clip-path: none;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   align-items: center;
   flex-shrink: 0;
