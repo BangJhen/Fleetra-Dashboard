@@ -50,7 +50,7 @@ Aplikasi `Fleetra-Mobile` yang ada masih memakai state lokal dan tidak diubah ol
 
 ## Konfigurasi
 
-Salin `.env.example` menjadi `.env.local` jika perlu. Tetapkan `SESSION_SECRET` acak untuk menjaga sesi antar restart. Tanpa variabel tersebut, secret dibuat acak di memori dan sesi perlu login ulang setelah proses berhenti.
+Salin `.env.example` menjadi `.env.local` jika perlu. Tetapkan `SESSION_SECRET` acak untuk deployment. Tanpa variabel tersebut, kunci sesi lokal dibuat sekali di `.data/session-secret` dan tetap berlaku saat server dev atau proses Node dimulai ulang. Berkas ini diabaikan Git dan harus disimpan secara privat. Banyak instance harus memakai `SESSION_SECRET` yang sama melalui environment.
 
 `MOBILE_DEMO_TOKEN` bersifat opsional dan tidak boleh memakai prefix `NEXT_PUBLIC`. Tanpa token, endpoint Mobile memberikan 503 agar tidak terbuka tanpa sengaja. Token demo mengikat satu identitas driver, ditentukan `MOBILE_DEMO_DRIVER_ID` (default `d1`), bukan role-based auth produksi. Untuk produksi, ganti akun demo serta shared token dengan autentikasi per pengguna dan izin database.
 

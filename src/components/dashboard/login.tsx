@@ -37,7 +37,6 @@ export function LoginForm({ mode = "login" }: { mode?: "login" | "register" }) {
       if (!res.ok) throw Error(result.error);
       if (registering) toast.success("Akun berhasil dibuat.");
       router.push("/dashboard");
-      router.refresh();
     } catch (e) {
       setError(
         e instanceof Error

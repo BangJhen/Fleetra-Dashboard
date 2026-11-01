@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -128,7 +127,6 @@ function ProfileEditor({
   );
 }
 export function Profile() {
-  const router = useRouter();
   const profile = useFleet(
     (s) => s.data.operatorProfile || defaultOperatorProfile,
   );
@@ -139,8 +137,7 @@ export function Profile() {
     try {
       const res = await fetch("/api/auth", { method: "DELETE" });
       if (!res.ok) throw Error();
-      router.push("/login");
-      router.refresh();
+      window.location.replace("/login");
     } catch {
       toast.error("Tidak dapat keluar. Coba lagi.");
       setBusy(false);

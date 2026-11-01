@@ -1,13 +1,9 @@
 import "server-only";
 import { cookies } from "next/headers";
-import { createHmac, timingSafeEqual, randomBytes } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { getRegisteredProfile } from "./accounts";
-const globals = globalThis as typeof globalThis & { fleetraSecret?: string };
-const secret =
-  process.env.SESSION_SECRET ||
-  globals.fleetraSecret ||
-  randomBytes(32).toString("hex");
-globals.fleetraSecret = secret;
+import { sessionSecret } from "./session-secret";
+const secret = sessionSecret();
 export function makeSession(userId = "demo") {
   const payload = `${userId}.${Date.now() + 8 * 60 * 60 * 1000}`;
   return (
