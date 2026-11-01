@@ -151,7 +151,7 @@ export function Profile() {
       >
         <Button onClick={() => setEditing(true)}>Edit profil</Button>
       </PageHeading>
-      <section className="content-panel profile-surface">
+      <section className="profile-surface" aria-label="Informasi profil">
         <div className="settings-profile">
           <Initials name={profile.name} />
           <div>
