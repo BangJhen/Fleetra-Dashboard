@@ -52,6 +52,78 @@ export const locations = [
     lat: -6.9444,
     lng: 107.6905,
   },
+  {
+    name: "Sentra Logistik Padalarang",
+    address: "Jl. Raya Padalarang, Bandung Barat",
+    lat: -6.8378,
+    lng: 107.4789,
+  },
+  {
+    name: "Hub Kargo Moh Toha",
+    address: "Jl. Moh. Toha, Dayeuhkolot",
+    lat: -6.9804,
+    lng: 107.6186,
+  },
+  {
+    name: "Depo Logistik Ujungberung",
+    address: "Jl. A.H. Nasution, Ujungberung",
+    lat: -6.9112,
+    lng: 107.7015,
+  },
+  {
+    name: "Terminal Logistik Cileunyi",
+    address: "Jl. Raya Cileunyi, Bandung Timur",
+    lat: -6.9387,
+    lng: 107.7472,
+  },
+  {
+    name: "Ritel Sentosa Pasirkoja",
+    address: "Jl. Terusan Pasirkoja, Bojongloa Kaler",
+    lat: -6.9312,
+    lng: 107.5874,
+  },
+  {
+    name: "Depo Farmasi Pasteur",
+    address: "Jl. Dr. Djunjunan, Sukajadi",
+    lat: -6.8924,
+    lng: 107.5812,
+  },
+  {
+    name: "Mitra Kargo Batununggal",
+    address: "Jl. Batununggal Indah Raya, Bandung Kidul",
+    lat: -6.9632,
+    lng: 107.6253,
+  },
+  {
+    name: "Hub Distribusi Soreang",
+    address: "Jl. Raya Soreang, Kab. Bandung",
+    lat: -7.0275,
+    lng: 107.5218,
+  },
+  {
+    name: "Toko Grosir Rajawali",
+    address: "Jl. Rajawali Barat, Andir",
+    lat: -6.9076,
+    lng: 107.5683,
+  },
+  {
+    name: "Depo Dingin Lembang",
+    address: "Jl. Raya Lembang, Lembang",
+    lat: -6.8189,
+    lng: 107.6174,
+  },
+  {
+    name: "Mitra Pangan Sukajadi",
+    address: "Jl. Sukajadi, Sukasari",
+    lat: -6.8778,
+    lng: 107.5982,
+  },
+  {
+    name: "Sentra Logistik Arcamanik",
+    address: "Jl. Arcamanik Endah, Bandung Timur",
+    lat: -6.9205,
+    lng: 107.6784,
+  },
 ];
 const names = [
   "Budi Santoso",

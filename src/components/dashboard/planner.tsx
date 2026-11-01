@@ -17,6 +17,11 @@ import { availableResources } from "@/lib/domain";
 import { FleetMap } from "./map-loader";
 import { BackLink, PageHeading } from "./common";
 import { Icon } from "./icons";
+import {
+  LocationSearchSelect,
+  VehicleSearchSelect,
+  DriverSearchSelect,
+} from "./planner-selectors";
 type Optimized = {
   order: number[];
   distance: number;
@@ -113,54 +118,30 @@ export function Planner() {
               <span>1</span>
               <div>
                 <h2>Susun rute perjalanan</h2>
-                <p>Gudang asal dan tujuan pengantaran.</p>
+                <p>Gudang asal dan tujuan pengantaran dapat dicari atau diklik dari peta.</p>
               </div>
             </div>
             <div className="stop-fields">
               {ordered.map((n, i) => (
-                <div className="stop-field" key={i}>
-                  <span className={`stop-index ${i === 0 ? "origin" : ""}`}>
-                    {i + 1}
-                  </span>
-                  <div className="form-field">
-                    <Label htmlFor={`stop-${i}`}>
-                      {i === 0 ? "Gudang asal" : `Tujuan ${i}`}
-                    </Label>
-                    <select
-                      id={`stop-${i}`}
-                      value={n}
-                      onChange={(e) =>
-                        changeStops(
-                          ordered.map((p, j) =>
-                            i === j ? Number(e.target.value) : p,
-                          ),
-                        )
-                      }
-                    >
-                      {locations.map((l, j) => (
-                        <option
-                          key={j}
-                          value={j}
-                          disabled={ordered.includes(j) && j !== n}
-                        >
-                          {l.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  {i > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`Hapus tujuan ${i}`}
-                      onClick={() =>
-                        changeStops(ordered.filter((_, j) => j !== i))
-                      }
-                    >
-                      <Icon name="close" />
-                    </Button>
-                  )}
-                </div>
+                <LocationSearchSelect
+                  key={`stop-${i}`}
+                  id={`stop-${i}`}
+                  value={n}
+                  locations={locations}
+                  selectedIndices={ordered}
+                  onChange={(nextIndex) =>
+                    changeStops(
+                      ordered.map((p, j) => (i === j ? nextIndex : p)),
+                    )
+                  }
+                  onRemove={
+                    i > 1
+                      ? () => changeStops(ordered.filter((_, j) => j !== i))
+                      : undefined
+                  }
+                  stopNumber={i + 1}
+                  isOrigin={i === 0}
+                />
               ))}
             </div>
             <Button
@@ -192,46 +173,20 @@ export function Planner() {
               <span>2</span>
               <div>
                 <h2>Alokasikan sumber daya</h2>
-                <p>Hanya armada dan pengemudi yang tersedia.</p>
+                <p>Cari kendaraan dan pengemudi berdasarkan ketersediaan dan performa.</p>
               </div>
             </div>
-            <div className="form-field">
-              <Label htmlFor="vehicle">Kendaraan</Label>
-              <select
-                id="vehicle"
+            <div className="resource-allocation-group">
+              <VehicleSearchSelect
                 value={vehicleId}
-                onChange={(e) => setVehicle(e.target.value)}
-                required
-              >
-                <option value="">Pilih kendaraan tersedia</option>
-                {resources.vehicles.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.plate} {v.model}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="form-field">
-              <Label htmlFor="driver">Pengemudi</Label>
-              <select
-                id="driver"
+                vehicles={resources.vehicles}
+                onChange={setVehicle}
+              />
+              <DriverSearchSelect
                 value={driverId}
-                onChange={(e) => setDriver(e.target.value)}
-                required
-              >
-                <option value="">Pilih pengemudi</option>
-                {resources.drivers
-                  .toSorted((a, b) => b.score - a.score)
-                  .map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name} dengan safety score {d.score}
-                    </option>
-                  ))}
-              </select>
-              <small>
-                Rekomendasi berdasarkan ketersediaan dan safety score di atas
-                85.
-              </small>
+                drivers={resources.drivers}
+                onChange={setDriver}
+              />
             </div>
           </section>
         </div>
@@ -239,12 +194,29 @@ export function Planner() {
           <div className="content-panel planner-map">
             <div className="section-heading">
               <h2>Pratinjau rute</h2>
-              <span className="muted">{points.length} titik singgah</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-primary bg-primary/10 px-2 py-0.5 rounded-full font-medium">
+                  {locations.length} titik aktif di peta
+                </span>
+                <span className="muted">{points.length} titik singgah</span>
+              </div>
             </div>
             <FleetMap
               points={points}
               route={optimized?.route}
+              allLocations={locations}
+              selectedIndices={ordered}
+              onAddStop={(idx) => {
+                if (!ordered.includes(idx)) {
+                  changeStops([...ordered, idx]);
+                  toast.success(`Menambahkan ${locations[idx]?.name} ke rute.`);
+                }
+              }}
             />
+            <p className="planner-map-instruction">
+              <Icon name="locate" />
+              <span>Klik penanda titik logistik biru di peta untuk langsung menambahkan tujuan ke rute.</span>
+            </p>
             <div className="route-estimates">
               <div>
                 <span>Total jarak</span>

@@ -4,6 +4,7 @@ import {
   MapContainer,
   Marker,
   Tooltip,
+  Popup,
   Polyline,
   useMap,
 } from "react-leaflet";
@@ -137,16 +138,22 @@ export default function FleetMap({
   onSelect,
   route,
   points,
+  allLocations,
+  selectedIndices,
+  onAddStop,
 }: {
   vehicles?: Vehicle[];
   selected?: string;
   onSelect?: (id: string) => void;
   route?: [number, number][];
   points?: { lat: number; lng: number; name: string }[];
+  allLocations?: { name: string; address: string; lat: number; lng: number }[];
+  selectedIndices?: number[];
+  onAddStop?: (index: number) => void;
 }) {
   const [tileError, setTileError] = useState(false);
   const mappedVehicles = vehicles.filter((vehicle) => Number.isFinite(vehicle.lat) && Number.isFinite(vehicle.lng));
-  const firstPoint = points?.[0] || mappedVehicles[0];
+  const firstPoint = points?.[0] || allLocations?.[0] || mappedVehicles[0];
   const center: [number, number] = firstPoint ? [firstPoint.lat, firstPoint.lng] : [-6.909, 107.616];
   return (
     <div className="map-canvas">
@@ -208,9 +215,45 @@ export default function FleetMap({
               iconSize: [28, 28],
             })}
           >
-            <Tooltip>{p.name}</Tooltip>
+            <Tooltip>{i === 0 ? `Asal: ${p.name}` : `Tujuan ${i}: ${p.name}`}</Tooltip>
           </Marker>
         ))}
+        {allLocations?.map((loc, idx) => {
+          if (selectedIndices?.includes(idx)) return null;
+          return (
+            <Marker
+              key={`hub-unassigned-${idx}`}
+              position={[loc.lat, loc.lng]}
+              title={loc.name}
+              alt={loc.name}
+              icon={L.divIcon({
+                className: "available-location-marker",
+                html: `<div class="hub-marker-pin"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2463D8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></div>`,
+                iconSize: [26, 26],
+                iconAnchor: [13, 26],
+                popupAnchor: [0, -26],
+              })}
+            >
+              <Popup className="fleetra-map-popup">
+                <div className="location-popup-card">
+                  <span className="location-popup-tag">Titik Logistik</span>
+                  <strong className="location-popup-name">{loc.name}</strong>
+                  <p className="location-popup-addr">{loc.address}</p>
+                  {onAddStop && (
+                    <button
+                      type="button"
+                      className="location-popup-action"
+                      onClick={() => onAddStop(idx)}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                      Tambah ke rute
+                    </button>
+                  )}
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })}
         <RouteFraming route={route} points={points} />
         <Controls selected={selected} vehicles={mappedVehicles} route={route} points={points} />
         <MapSources />
