@@ -45,10 +45,10 @@ export function Brand({ sidebar = false }: { sidebar?: boolean }) {
   return (
     <div className={sidebar ? "brand brand-sidebar" : "brand"}>
       <Image
-        src="/logo-fleetra.png"
+        src="/logo-fleetra-text.png"
         alt="FLEETRA"
-        width={2172}
-        height={724}
+        width={1460}
+        height={292}
         priority
       />
     </div>

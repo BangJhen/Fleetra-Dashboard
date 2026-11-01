@@ -225,8 +225,8 @@
   padding: 21px 16px 0;
 }
 .brand {
-  height: 52px;
-  width: 165px;
+  height: 40px;
+  width: 155px;
   max-width: 100%;
   position: relative;
   margin: 0 10px 24px;
@@ -2352,7 +2352,8 @@
 }
 .login-brand .brand {
   margin: 0;
-  width: 160px;
+  width: 155px;
+  height: 40px;
 }
 .login-brand > span {
   font-size: 10px;
@@ -3311,8 +3312,8 @@
     padding-left: 13px;
   }
   .login-brand .brand {
-    width: 135px;
-    height: 42px;
+    width: 130px;
+    height: 34px;
   }
   .login-brand .brand img {
     position: static;
@@ -3683,20 +3684,22 @@
     max-width: calc(100% - 24px) !important;
   }
 }
-/* Preserve the supplied horizontal logo in full on desktop and mobile sidebars. */
+/* Preserve the supplied text logo in full on desktop and mobile sidebars. */
 .brand.brand-sidebar {
-  width: 180px;
+  width: 165px;
   max-width: calc(100% - 12px);
-  height: 60px;
-  margin: 0 6px 22px;
+  height: 42px;
+  margin: 0 6px 24px;
   clip-path: none;
   overflow: visible;
+  display: flex;
+  align-items: center;
 }
 .brand.brand-sidebar img {
   position: static;
   width: 100%;
-  height: 100%;
-  max-width: 100%;
+  height: auto;
+  max-height: 100%;
   object-fit: contain;
 }
 .safety-panels {
