@@ -296,20 +296,20 @@ export function VehicleSearchSelect({
         </button>
       ) : (
         <div className="resource-card-selected">
-          <div className="resource-card-main">
-            <div className="resource-card-header">
-              <span className="resource-plate-pill">{selectedVehicle.plate}</span>
-              <span className="resource-model-name">{selectedVehicle.model}</span>
-              <span className="resource-type-badge">{selectedVehicle.type}</span>
+          <div className="resource-card-main min-w-0 flex-1 overflow-hidden">
+            <div className="resource-card-header flex items-center gap-2 min-w-0 w-full overflow-hidden whitespace-nowrap">
+              <span className="resource-plate-pill shrink-0 whitespace-nowrap">{selectedVehicle.plate}</span>
+              <span className="resource-model-name flex-1 min-w-0 truncate">{selectedVehicle.model}</span>
+              <span className="resource-type-badge shrink-0 whitespace-nowrap">{selectedVehicle.type}</span>
             </div>
-            <div className="resource-metrics-grid">
-              <span className="resource-metric-item">
+            <div className="resource-metrics-grid flex items-center gap-2.5 overflow-hidden whitespace-nowrap">
+              <span className="resource-metric-item shrink-0 whitespace-nowrap">
                 <Icon name="fuel" /> BBM {selectedVehicle.fuel}%
               </span>
-              <span className="resource-metric-item">
+              <span className="resource-metric-item shrink-0 whitespace-nowrap">
                 <Icon name="brake" /> Rem {selectedVehicle.brake}%
               </span>
-              <span className="resource-metric-item">
+              <span className="resource-metric-item shrink-0 whitespace-nowrap">
                 Odo {selectedVehicle.odometer.toLocaleString("id-ID")} km
               </span>
             </div>
@@ -319,7 +319,7 @@ export function VehicleSearchSelect({
             variant="outline"
             size="sm"
             onClick={() => setIsOpen(true)}
-            className="resource-change-btn"
+            className="resource-change-btn shrink-0"
           >
             Ganti
           </Button>
@@ -375,26 +375,26 @@ export function VehicleSearchSelect({
                   <button
                     key={v.id}
                     type="button"
-                    className={`resource-item-card ${isSelected ? "selected" : ""}`}
+                    className={`resource-item-card h-14 min-h-[56px] max-h-[56px] box-border ${isSelected ? "selected" : ""}`}
                     onClick={() => {
                       onChange(v.id);
                       setIsOpen(false);
                       setQuery("");
                     }}
                   >
-                    <div className="resource-item-left">
-                      <div className="resource-item-title-row">
-                        <span className="resource-plate-pill">{v.plate}</span>
-                        <strong className="resource-item-model">{v.model}</strong>
-                        <span className="resource-type-tag">{v.type}</span>
+                    <div className="resource-item-left min-w-0 flex-1 overflow-hidden">
+                      <div className="resource-item-title-row flex items-center gap-1.5 min-w-0 w-full overflow-hidden whitespace-nowrap">
+                        <span className="resource-plate-pill shrink-0 whitespace-nowrap">{v.plate}</span>
+                        <strong className="resource-item-model flex-1 min-w-0 truncate text-[11.5px] font-semibold text-slate-900" title={v.model}>{v.model}</strong>
+                        <span className="resource-type-tag shrink-0 whitespace-nowrap">{v.type}</span>
                       </div>
-                      <div className="resource-item-stats">
-                        <span className="stat-pill"><Icon name="fuel" /> {v.fuel}%</span>
-                        <span className="stat-pill"><Icon name="brake" /> Rem {v.brake}%</span>
-                        <span className="stat-pill">{v.odometer.toLocaleString("id-ID")} km</span>
+                      <div className="resource-item-stats flex items-center gap-2 overflow-hidden whitespace-nowrap flex-nowrap">
+                        <span className="stat-pill shrink-0 whitespace-nowrap"><Icon name="fuel" /> {v.fuel}%</span>
+                        <span className="stat-pill shrink-0 whitespace-nowrap"><Icon name="brake" /> Rem {v.brake}%</span>
+                        <span className="stat-pill shrink-0 whitespace-nowrap">{v.odometer.toLocaleString("id-ID")} km</span>
                       </div>
                     </div>
-                    <div className="resource-item-right">
+                    <div className="resource-item-right shrink-0 whitespace-nowrap">
                       {isSelected ? (
                         <span className="resource-selected-indicator"><Icon name="check" /> Terpilih</span>
                       ) : (
@@ -510,25 +510,25 @@ export function DriverSearchSelect({
         </button>
       ) : (
         <div className="resource-card-selected">
-          <div className="resource-card-main">
-            <div className="resource-card-header">
-              <span className="resource-driver-name">{selectedDriver.name}</span>
+          <div className="resource-card-main min-w-0 flex-1 overflow-hidden">
+            <div className="resource-card-header flex items-center gap-2 min-w-0 w-full overflow-hidden whitespace-nowrap">
+              <span className="resource-driver-name flex-1 min-w-0 truncate text-xs font-semibold text-slate-900">{selectedDriver.name}</span>
               <span
-                className={`safety-badge-pill ${
+                className={`safety-badge-pill shrink-0 whitespace-nowrap ${
                   selectedDriver.score >= 85 ? "high" : "medium"
                 }`}
               >
                 Safety Score {selectedDriver.score}
               </span>
             </div>
-            <div className="resource-metrics-grid">
-              <span className="resource-metric-item">
+            <div className="resource-metrics-grid flex items-center gap-2.5 overflow-hidden whitespace-nowrap">
+              <span className="resource-metric-item shrink-0 whitespace-nowrap">
                 {selectedDriver.trips} pengantaran selesai
               </span>
-              <span className="resource-metric-item">
+              <span className="resource-metric-item shrink-0 whitespace-nowrap">
                 Rem mendadak: {selectedDriver.braking}x
               </span>
-              <span className="resource-metric-item">
+              <span className="resource-metric-item shrink-0 whitespace-nowrap">
                 Over-speed: {selectedDriver.speeding}x
               </span>
             </div>
@@ -538,7 +538,7 @@ export function DriverSearchSelect({
             variant="outline"
             size="sm"
             onClick={() => setIsOpen(true)}
-            className="resource-change-btn"
+            className="resource-change-btn shrink-0"
           >
             Ganti
           </Button>
@@ -605,31 +605,31 @@ export function DriverSearchSelect({
                   <button
                     key={d.id}
                     type="button"
-                    className={`resource-item-card ${isSelected ? "selected" : ""}`}
+                    className={`resource-item-card h-14 min-h-[56px] max-h-[56px] box-border ${isSelected ? "selected" : ""}`}
                     onClick={() => {
                       onChange(d.id);
                       setIsOpen(false);
                       setQuery("");
                     }}
                   >
-                    <div className="resource-item-left">
-                      <div className="resource-item-title-row">
-                        <strong className="resource-driver-name">{d.name}</strong>
+                    <div className="resource-item-left min-w-0 flex-1 overflow-hidden">
+                      <div className="resource-item-title-row flex items-center gap-1.5 min-w-0 w-full overflow-hidden whitespace-nowrap">
+                        <strong className="resource-driver-name flex-1 min-w-0 truncate text-[12px] font-semibold text-slate-900" title={d.name}>{d.name}</strong>
                         <span
-                          className={`safety-badge-pill ${
+                          className={`safety-badge-pill shrink-0 whitespace-nowrap ${
                             d.score >= 85 ? "high" : "medium"
                           }`}
                         >
                           Score {d.score}
                         </span>
                       </div>
-                      <div className="resource-item-stats">
-                        <span className="stat-pill">{d.trips} perjalanan selesai</span>
-                        <span className="stat-pill">Rem: {d.braking}x</span>
-                        <span className="stat-pill">Speed: {d.speeding}x</span>
+                      <div className="resource-item-stats flex items-center gap-2 overflow-hidden whitespace-nowrap flex-nowrap">
+                        <span className="stat-pill shrink-0 whitespace-nowrap">{d.trips} perjalanan selesai</span>
+                        <span className="stat-pill shrink-0 whitespace-nowrap">Rem: {d.braking}x</span>
+                        <span className="stat-pill shrink-0 whitespace-nowrap">Speed: {d.speeding}x</span>
                       </div>
                     </div>
-                    <div className="resource-item-right">
+                    <div className="resource-item-right shrink-0 whitespace-nowrap">
                       {isSelected ? (
                         <span className="resource-selected-indicator"><Icon name="check" /> Terpilih</span>
                       ) : (

@@ -5001,8 +5001,11 @@
 .resource-card-header {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
 }
 .resource-plate-pill {
   font-family: var(--font-mono, monospace);
@@ -5013,11 +5016,22 @@
   background: #0f172a;
   color: #ffffff;
   border-radius: 4px;
+  white-space: nowrap !important;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
 }
 .resource-model-name {
   font-size: 12px;
   font-weight: 600;
   color: #0f172a;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  min-width: 0;
+  flex-shrink: 1;
 }
 .resource-type-badge {
   font-size: 9px;
@@ -5027,12 +5041,17 @@
   background: #e2e8f0;
   color: #475569;
   border-radius: 4px;
+  white-space: nowrap !important;
+  flex-shrink: 0;
 }
 .resource-metrics-grid {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 10px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
 }
 .resource-metric-item {
   display: inline-flex;
@@ -5040,6 +5059,8 @@
   gap: 4px;
   font-size: 10px;
   color: #64748b;
+  white-space: nowrap !important;
+  flex-shrink: 0;
 }
 .resource-metric-item svg {
   width: 12px;
@@ -5047,15 +5068,22 @@
   color: #94a3b8;
 }
 .resource-driver-name {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   color: #0f172a;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  min-width: 0;
+  flex-shrink: 1;
 }
 .safety-badge-pill {
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 9999px;
+  white-space: nowrap !important;
+  flex-shrink: 0;
 }
 .safety-badge-pill.high {
   background: #ecfdf5;
@@ -5152,15 +5180,20 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  padding: 9px 12px;
+  height: 56px;
+  min-height: 56px;
+  max-height: 56px;
+  padding: 8px 12px;
   background: #ffffff;
   border: 1px solid #f1f5f9;
   border-radius: 8px;
   text-align: left;
   cursor: pointer;
   transition: all 0.12s ease;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 .resource-item-card:hover {
   background: #f8fafc;
@@ -5173,19 +5206,30 @@
 .resource-item-left {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  justify-content: center;
+  gap: 3px;
   min-width: 0;
   flex: 1;
+  overflow: hidden;
 }
 .resource-item-title-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap !important;
 }
 .resource-item-model {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
   color: #0f172a;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 .resource-type-tag {
   font-size: 9px;
@@ -5194,12 +5238,17 @@
   border-radius: 3px;
   background: #f1f5f9;
   color: #64748b;
+  white-space: nowrap !important;
+  flex-shrink: 0;
 }
 .resource-item-stats {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap !important;
   gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap !important;
 }
 .stat-pill {
   display: inline-flex;
@@ -5207,14 +5256,18 @@
   gap: 3px;
   font-size: 10px;
   color: #64748b;
+  white-space: nowrap !important;
+  flex-shrink: 0;
 }
 .stat-pill svg {
   width: 11px;
   height: 11px;
   color: #94a3b8;
+  flex-shrink: 0;
 }
 .resource-item-right {
   flex-shrink: 0;
+  white-space: nowrap !important;
 }
 .resource-available-badge {
   font-size: 9.5px;
@@ -5223,6 +5276,10 @@
   border-radius: 9999px;
   background: #f1f5f9;
   color: #475569;
+  white-space: nowrap !important;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
 }
 .resource-selected-indicator {
   font-size: 9.5px;
