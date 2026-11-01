@@ -22,11 +22,12 @@ import {
   time,
 } from "./common";
 import { Icon } from "./icons";
+import { useDebouncedSearch } from "./use-debounced-search";
 export function Dispatch() {
   const data = useFleet((s) => s.data);
   const params = useSearchParams();
   const [filter, setFilter] = useState(params.get("status") || "all");
-  const [query, setQuery] = useState("");
+  const search = useDebouncedSearch("", { delay: 350 });
   const [sort, setSort] = useState("new");
   const trips = data.trips
     .filter(
@@ -34,7 +35,7 @@ export function Dispatch() {
         (filter === "all" || t.status === filter) &&
         `${t.code} ${data.drivers.find((d) => d.id === t.driverId)?.name} ${t.stops.map((s) => s.name).join(" ")}`
           .toLowerCase()
-          .includes(query.toLowerCase()),
+          .includes(search.debouncedValue.toLowerCase()),
     )
     .toSorted((a, b) =>
       sort === "new"
@@ -98,9 +99,20 @@ export function Dispatch() {
             <Input
               aria-label="Cari penugasan"
               placeholder="Cari kode atau pengemudi"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              value={search.value}
+              onChange={search.onChange}
+              onKeyDown={search.onKeyDown}
             />
+            {search.value && (
+              <button
+                type="button"
+                aria-label="Hapus pencarian"
+                onClick={search.clear}
+                className="combobox-clear-btn"
+              >
+                <Icon name="close" />
+              </button>
+            )}
           </div>
         </div>
         <div className="table-scroll">

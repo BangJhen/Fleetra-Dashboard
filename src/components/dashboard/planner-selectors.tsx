@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import { Icon } from "./icons";
 import { Button } from "@/components/ui/button";
 import type { Driver, Vehicle } from "@/lib/types";
+import { useDebouncedSearch } from "./use-debounced-search";
 
 interface Location {
   name: string;
@@ -44,7 +45,7 @@ export function LocationSearchSelect({
   isOrigin?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [query, setQuery] = useState("");
+  const search = useDebouncedSearch("", { delay: 350 });
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -71,12 +72,12 @@ export function LocationSearchSelect({
   }, [isOpen]);
 
   const filteredLocations = useMemo(() => {
-    if (!query.trim()) return locations.map((loc, idx) => ({ ...loc, originalIndex: idx }));
-    const q = query.toLowerCase();
+    if (!search.debouncedValue.trim()) return locations.map((loc, idx) => ({ ...loc, originalIndex: idx }));
+    const q = search.debouncedValue.toLowerCase();
     return locations
       .map((loc, idx) => ({ ...loc, originalIndex: idx }))
       .filter((loc) => loc.name.toLowerCase().includes(q) || loc.address.toLowerCase().includes(q));
-  }, [locations, query]);
+  }, [locations, search.debouncedValue]);
 
   return (
     <div className="stop-field" ref={containerRef}>
@@ -130,14 +131,15 @@ export function LocationSearchSelect({
                   ref={inputRef}
                   type="text"
                   placeholder="Cari nama lokasi atau alamat jalan..."
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  value={search.value}
+                  onChange={search.onChange}
+                  onKeyDown={search.onKeyDown}
                   className="combobox-search-input"
                 />
-                {query && (
+                {search.value && (
                   <button
                     type="button"
-                    onClick={() => setQuery("")}
+                    onClick={search.clear}
                     className="combobox-clear-btn"
                     aria-label="Bersihkan pencarian"
                   >
@@ -148,7 +150,7 @@ export function LocationSearchSelect({
               <div className="combobox-scroll-list">
                 {filteredLocations.length === 0 ? (
                   <div className="combobox-empty-message">
-                    Tidak ada lokasi yang cocok dengan &quot;{query}&quot;
+                    Tidak ada lokasi yang cocok dengan &quot;{search.debouncedValue}&quot;
                   </div>
                 ) : (
                   filteredLocations.map((loc) => {
@@ -163,7 +165,7 @@ export function LocationSearchSelect({
                         onClick={() => {
                           onChange(loc.originalIndex);
                           setIsOpen(false);
-                          setQuery("");
+                          search.clear();
                         }}
                       >
                         <div className="combobox-item-info">
@@ -216,7 +218,7 @@ export function VehicleSearchSelect({
   onChange: (id: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [query, setQuery] = useState("");
+  const search = useDebouncedSearch("", { delay: 350 });
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -248,8 +250,8 @@ export function VehicleSearchSelect({
     if (typeFilter !== "all") {
       list = list.filter((v) => v.type.toLowerCase() === typeFilter.toLowerCase());
     }
-    if (query.trim()) {
-      const q = query.toLowerCase();
+    if (search.debouncedValue.trim()) {
+      const q = search.debouncedValue.toLowerCase();
       list = list.filter(
         (v) =>
           v.plate.toLowerCase().includes(q) ||
@@ -258,7 +260,7 @@ export function VehicleSearchSelect({
       );
     }
     return list;
-  }, [vehicles, query, typeFilter]);
+  }, [vehicles, search.debouncedValue, typeFilter]);
 
   return (
     <div className={`resource-selector-block ${isOpen ? "z-30" : "z-10"}`} ref={containerRef}>
@@ -334,14 +336,15 @@ export function VehicleSearchSelect({
               ref={inputRef}
               type="text"
               placeholder="Cari plat nomor (cth: D 8124) atau model (cth: Gran Max)..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              value={search.value}
+              onChange={search.onChange}
+              onKeyDown={search.onKeyDown}
               className="resource-search-input"
             />
-            {query && (
+            {search.value && (
               <button
                 type="button"
-                onClick={() => setQuery("")}
+                onClick={search.clear}
                 className="combobox-clear-btn"
                 aria-label="Bersihkan pencarian"
               >
@@ -379,7 +382,7 @@ export function VehicleSearchSelect({
                     onClick={() => {
                       onChange(v.id);
                       setIsOpen(false);
-                      setQuery("");
+                      search.clear();
                     }}
                   >
                     <div className="resource-item-left min-w-0 flex-1 overflow-hidden">
@@ -425,7 +428,7 @@ export function DriverSearchSelect({
   onChange: (id: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [query, setQuery] = useState("");
+  const search = useDebouncedSearch("", { delay: 350 });
   const [scoreFilter, setScoreFilter] = useState<string>("all");
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -463,8 +466,8 @@ export function DriverSearchSelect({
     } else if (scoreFilter === "medium") {
       list = list.filter((d) => d.score >= 75 && d.score < 85);
     }
-    if (query.trim()) {
-      const q = query.toLowerCase();
+    if (search.debouncedValue.trim()) {
+      const q = search.debouncedValue.toLowerCase();
       list = list.filter(
         (d) =>
           d.name.toLowerCase().includes(q) ||
@@ -472,7 +475,7 @@ export function DriverSearchSelect({
       );
     }
     return list;
-  }, [sortedDrivers, query, scoreFilter]);
+  }, [sortedDrivers, search.debouncedValue, scoreFilter]);
 
   return (
     <div className={`resource-selector-block ${isOpen ? "z-30" : "z-10"}`} ref={containerRef}>
@@ -553,14 +556,15 @@ export function DriverSearchSelect({
               ref={inputRef}
               type="text"
               placeholder="Cari nama pengemudi atau nomor kontak..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              value={search.value}
+              onChange={search.onChange}
+              onKeyDown={search.onKeyDown}
               className="resource-search-input"
             />
-            {query && (
+            {search.value && (
               <button
                 type="button"
-                onClick={() => setQuery("")}
+                onClick={search.clear}
                 className="combobox-clear-btn"
                 aria-label="Bersihkan pencarian"
               >
@@ -609,7 +613,7 @@ export function DriverSearchSelect({
                     onClick={() => {
                       onChange(d.id);
                       setIsOpen(false);
-                      setQuery("");
+                      search.clear();
                     }}
                   >
                     <div className="resource-item-left min-w-0 flex-1 overflow-hidden">

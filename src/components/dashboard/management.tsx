@@ -24,10 +24,14 @@ import { vehicleType, vehicleTypeLabels } from "@/lib/vehicle-types";
 import { Icon } from "./icons";
 import { MasterEditor, MasterArchive } from "./master-editor";
 import type { Vehicle, Driver } from "@/lib/types";
+import { useDebouncedSearch } from "./use-debounced-search";
 export function Management({ kind }: { kind: "vehicles" | "drivers" }) {
   const data = useFleet((s) => s.data);
-  const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
+  const search = useDebouncedSearch("", {
+    delay: 350,
+    onSearch: () => setPage(1),
+  });
   const isVehicles = kind === "vehicles";
   const [editor, setEditor] = useState<Vehicle | Driver | null | undefined>(
     undefined,
@@ -37,12 +41,12 @@ export function Management({ kind }: { kind: "vehicles" | "drivers" }) {
   const vehicles = data.vehicles.filter(
     (v) =>
       !!v.archivedAt === showArchived &&
-      `${v.plate} ${v.model} ${vehicleTypeLabels[vehicleType(v)]}`.toLowerCase().includes(query.toLowerCase()),
+      `${v.plate} ${v.model} ${vehicleTypeLabels[vehicleType(v)]}`.toLowerCase().includes(search.debouncedValue.toLowerCase()),
   );
   const drivers = data.drivers.filter(
     (d) =>
       !!d.archivedAt === showArchived &&
-      d.name.toLowerCase().includes(query.toLowerCase()),
+      d.name.toLowerCase().includes(search.debouncedValue.toLowerCase()),
   );
   const count = isVehicles ? vehicles.length : drivers.length;
   const totalPages = Math.max(1, Math.ceil(count / 12));
@@ -89,12 +93,23 @@ export function Management({ kind }: { kind: "vehicles" | "drivers" }) {
               <Input
                 aria-label={isVehicles ? "Cari kendaraan" : "Cari nama pengemudi"}
                 placeholder={isVehicles ? "Cari plat atau model" : "Cari nama pengemudi"}
-                value={query}
-                onChange={(e) => { setQuery(e.target.value); setPage(1); }}
+                value={search.value}
+                onChange={search.onChange}
+                onKeyDown={search.onKeyDown}
               />
+              {search.value && (
+                <button
+                  type="button"
+                  aria-label="Hapus pencarian"
+                  onClick={search.clear}
+                  className="combobox-clear-btn"
+                >
+                  <Icon name="close" />
+                </button>
+              )}
             </div>
             <Button variant="ghost" size="sm" className="management-archive-toggle"
-              onClick={() => { setShowArchived(v => !v); setPage(1); setQuery(""); }}>
+              onClick={() => { setShowArchived(v => !v); setPage(1); search.clear(); }}>
               {showArchived ? "Lihat data aktif" : "Lihat arsip"}
             </Button>
           </div>

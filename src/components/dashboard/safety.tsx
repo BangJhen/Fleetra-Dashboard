@@ -17,6 +17,7 @@ import {
 import { useFleet } from "./provider";
 import { PageHeading, Status, Initials, EmptyState } from "./common";
 import { Icon } from "./icons";
+import { useDebouncedSearch } from "./use-debounced-search";
 export function Safety() {
   const params = useSearchParams();
   const stored = useFleet((s) => s.data);
@@ -25,9 +26,12 @@ export function Safety() {
     vehicles: stored.vehicles.filter((v) => !v.archivedAt),
     drivers: stored.drivers.filter((d) => !d.archivedAt),
   };
-  const [query, setQuery] = useState("");
-  const [onlyRisk, setOnlyRisk] = useState(true);
   const [page, setPage] = useState(1);
+  const search = useDebouncedSearch("", {
+    delay: 350,
+    onSearch: () => setPage(1),
+  });
+  const [onlyRisk, setOnlyRisk] = useState(true);
   const pageSize = 8;
   const average =
     data.vehicles.reduce((n, v) => n + v.health, 0) /
@@ -35,10 +39,10 @@ export function Safety() {
   const vehicles = data.vehicles.filter(
     (v) =>
       (!onlyRisk || v.status === "service") &&
-      v.plate.toLowerCase().includes(query.toLowerCase()),
+      v.plate.toLowerCase().includes(search.debouncedValue.toLowerCase()),
   );
   const drivers = data.drivers
-    .filter((d) => d.name.toLowerCase().includes(query.toLowerCase()))
+    .filter((d) => d.name.toLowerCase().includes(search.debouncedValue.toLowerCase()))
     .toSorted((a, b) => b.score - a.score);
   const vehiclePage = Math.min(page, Math.max(1, Math.ceil(vehicles.length / pageSize)));
   const driverPage = Math.min(page, Math.max(1, Math.ceil(drivers.length / pageSize)));
@@ -50,7 +54,7 @@ export function Safety() {
       />
       <Tabs
         defaultValue={params.get("tab") === "drivers" ? "drivers" : "health"}
-        onValueChange={() => { setQuery(""); setPage(1); }}
+        onValueChange={() => { search.clear(); setPage(1); }}
       >
         <TabsList className="page-tabs">
           <TabsTrigger value="health">Kesehatan armada</TabsTrigger>
@@ -83,8 +87,9 @@ export function Safety() {
                   className="compact-input"
                   aria-label="Cari armada"
                   placeholder="Cari plat kendaraan"
-                  value={query}
-                  onChange={(e) => { setQuery(e.target.value); setPage(1); }}
+                  value={search.value}
+                  onChange={search.onChange}
+                  onKeyDown={search.onKeyDown}
                 />
               </div>
             </div>
@@ -162,8 +167,9 @@ export function Safety() {
                 className="compact-input"
                 aria-label="Cari pengemudi"
                 placeholder="Cari nama pengemudi"
-                value={query}
-                onChange={(e) => { setQuery(e.target.value); setPage(1); }}
+                value={search.value}
+                onChange={search.onChange}
+                onKeyDown={search.onKeyDown}
               />
             </div>
             <Table>

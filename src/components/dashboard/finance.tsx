@@ -20,9 +20,10 @@ import {
   EmptyState,
 } from "./common";
 import { Icon } from "./icons";
+import { useDebouncedSearch } from "./use-debounced-search";
 export function Rto({ id }: { id?: string }) {
   const data = useFleet((s) => s.data);
-  const [query, setQuery] = useState("");
+  const search = useDebouncedSearch("", { delay: 350 });
   const balance = (cid: string, opening: number) =>
     opening +
     data.ledger
@@ -32,7 +33,7 @@ export function Rto({ id }: { id?: string }) {
     data.drivers
       .find((d) => d.id === c.driverId)
       ?.name.toLowerCase()
-      .includes(query.toLowerCase()),
+      .includes(search.debouncedValue.toLowerCase()),
   );
   if (id) {
     const c = data.contracts.find((c) => c.id === id);
@@ -200,8 +201,9 @@ export function Rto({ id }: { id?: string }) {
             className="compact-input"
             aria-label="Cari mitra RTO"
             placeholder="Cari nama mitra"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            value={search.value}
+            onChange={search.onChange}
+            onKeyDown={search.onKeyDown}
           />
         </div>
         <div className="contract-list">

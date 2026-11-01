@@ -18,6 +18,7 @@ import {
 } from "./common";
 import { cn } from "@/lib/utils";
 import type { VehicleStatus } from "@/lib/types";
+import { useDebouncedSearch } from "./use-debounced-search";
 export function Tracking() {
   const stored = useFleet((s) => s.data);
   const refreshed = useFleet((s) => s.refreshed);
@@ -26,7 +27,7 @@ export function Tracking() {
     vehicles: stored.vehicles.filter((v) => !v.archivedAt),
     drivers: stored.drivers.filter((d) => !d.archivedAt),
   };
-  const [query, setQuery] = useState("");
+  const search = useDebouncedSearch("", { delay: 350 });
   const [filter, setFilter] = useState<VehicleStatus | "all">("all");
   const [selected, setSelected] = useState<string | null>(null);
   const vehicles = data.vehicles.filter(
@@ -34,7 +35,7 @@ export function Tracking() {
       (filter === "all" || v.status === filter) &&
       `${v.plate} ${v.model} ${vehicleTypeLabels[vehicleType(v)]} ${data.drivers.find((d) => d.id === v.driverId)?.name}`
         .toLowerCase()
-        .includes(query.toLowerCase()),
+        .includes(search.debouncedValue.toLowerCase()),
   );
   const moving = data.vehicles.filter((v) => v.status === "moving").length;
   const idle = data.vehicles.filter((v) => v.status === "idle").length;
@@ -130,13 +131,14 @@ export function Tracking() {
               <Input
                 aria-label="Cari plat atau pengemudi"
                 placeholder="Cari plat atau pengemudi"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                value={search.value}
+                onChange={search.onChange}
+                onKeyDown={search.onKeyDown}
               />
-              {query && (
+              {search.value && (
                 <button
                   aria-label="Hapus pencarian"
-                  onClick={() => setQuery("")}
+                  onClick={search.clear}
                 >
                   <Icon name="close" />
                 </button>
