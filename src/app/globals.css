@@ -225,19 +225,20 @@
   padding: 21px 16px 0;
 }
 .brand {
-  height: 42px;
-  width: 157px;
-  overflow: hidden;
+  height: 52px;
+  width: 165px;
+  max-width: 100%;
   position: relative;
-  margin: 0 10px 25px;
+  margin: 0 10px 24px;
+  display: flex;
+  align-items: center;
 }
 .brand img {
-  position: absolute;
-  top: -100px;
-  left: -5px;
-  width: 154px;
-  height: 154px;
-  max-width: none;
+  position: static;
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
 }
 .workspace-switch {
   padding: 12px 9px;
@@ -3310,13 +3311,14 @@
     padding-left: 13px;
   }
   .login-brand .brand {
-    width: 130px;
+    width: 135px;
+    height: 42px;
   }
   .login-brand .brand img {
-    width: 133px;
-    height: 133px;
-    top: -83px;
-    left: -4px;
+    position: static;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
   }
   .login-content {
     display: block;
