@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ import {
   PageHeading,
   Status,
   EmptyState,
+  PaginationControls,
   date,
   time,
 } from "./common";
@@ -28,12 +29,23 @@ export function Etle({ id }: { id?: string }) {
   const data = useFleet((s) => s.data);
   const mutate = useFleet((s) => s.mutate);
   const router = useRouter();
+  const [page, setPage] = useState(1);
+  const pageSize = 6;
   const [reference, setReference] = useState("");
   const [plate, setPlate] = useState("");
   const [at, setAt] = useState("");
   const [location, setLocation] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  const sortedEtle = useMemo(() => {
+    return data.etle.toSorted((a, b) => Date.parse(b.at) - Date.parse(a.at));
+  }, [data.etle]);
+
+  const paginatedEtle = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return sortedEtle.slice(start, start + pageSize);
+  }, [sortedEtle, page, pageSize]);
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -235,40 +247,48 @@ export function Etle({ id }: { id?: string }) {
               description="Hasil pencocokan akan tersimpan di sini untuk ditinjau kembali."
             />
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Referensi dan armada</TableHead>
-                  <TableHead>Kejadian</TableHead>
-                  <TableHead>Hasil pencocokan</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.etle.toSorted((a, b) => Date.parse(b.at) - Date.parse(a.at)).map((e) => (
-                  <TableRow key={e.id}>
-                    <TableCell>
-                      <Link
-                        className="table-primary-link"
-                        href={`/dashboard/finance/etle/${e.id}`}
-                      >
-                        {e.reference}
-                      </Link>
-                      <small className="table-secondary">{e.plate}{e.source === "simulasi" ? "  Simulasi" : ""}</small>
-                    </TableCell>
-                    <TableCell>
-                      <span>{date(e.at)} pukul {time(e.at)}</span>
-                      <small className="table-secondary">{e.location}</small>
-                    </TableCell>
-                    <TableCell>
-                      <span className="etle-case-status">
-                        <Status status={e.status} />
-                        <small>{e.candidates.length} kandidat perjalanan</small>
-                      </span>
-                    </TableCell>
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Referensi dan armada</TableHead>
+                    <TableHead>Kejadian</TableHead>
+                    <TableHead>Hasil pencocokan</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {paginatedEtle.map((e) => (
+                    <TableRow key={e.id}>
+                      <TableCell>
+                        <Link
+                          className="table-primary-link"
+                          href={`/dashboard/finance/etle/${e.id}`}
+                        >
+                          {e.reference}
+                        </Link>
+                        <small className="table-secondary">{e.plate}{e.source === "simulasi" ? "  Simulasi" : ""}</small>
+                      </TableCell>
+                      <TableCell>
+                        <span>{date(e.at)} pukul {time(e.at)}</span>
+                        <small className="table-secondary">{e.location}</small>
+                      </TableCell>
+                      <TableCell>
+                        <span className="etle-case-status">
+                          <Status status={e.status} />
+                          <small>{e.candidates.length} kandidat perjalanan</small>
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <PaginationControls
+                count={data.etle.length}
+                page={page}
+                pageSize={pageSize}
+                onPage={setPage}
+              />
+            </>
           )}
         </section>
       </div>

@@ -18,6 +18,7 @@ import {
   Initials,
   ExportButton,
   EmptyState,
+  PaginationControls,
 } from "./common";
 import { VehicleArt } from "./vehicle-art";
 import { vehicleType, vehicleTypeLabels } from "@/lib/vehicle-types";
@@ -252,27 +253,12 @@ export function Management({ kind }: { kind: "vehicles" | "drivers" }) {
             description="Gunakan kata pencarian lain."
           />
         )}
-        <div className="table-footer">
-          Halaman {currentPage} dari {totalPages}
-          <div className="inline-controls">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentPage === 1}
-              onClick={() => setPage(currentPage - 1)}
-            >
-              Sebelumnya
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentPage >= totalPages}
-              onClick={() => setPage(currentPage + 1)}
-            >
-              Berikutnya
-            </Button>
-          </div>
-        </div>
+        <PaginationControls
+          count={count}
+          page={currentPage}
+          pageSize={12}
+          onPage={setPage}
+        />
       </section>
       {editor !== undefined && (
         <MasterEditor

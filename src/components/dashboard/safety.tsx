@@ -15,7 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useFleet } from "./provider";
-import { PageHeading, Status, Initials, EmptyState } from "./common";
+import { PageHeading, Status, Initials, EmptyState, PaginationControls } from "./common";
 import { Icon } from "./icons";
 import { useDebouncedSearch } from "./use-debounced-search";
 export function Safety() {
@@ -236,16 +236,13 @@ export function Safety() {
 function SafetyListPagination({ count, page, pageSize, onPage }: {
   count: number; page: number; pageSize: number; onPage: (page: number) => void;
 }) {
-  if (!count) return null;
-  const pages = Math.max(1, Math.ceil(count / pageSize));
-  const current = Math.min(page, pages);
-  return <div className="table-footer safety-list-pagination">
-    <span>{(current - 1) * pageSize + 1} sampai {Math.min(current * pageSize, count)} dari {count}</span>
-    <div className="inline-controls">
-      <Button variant="outline" size="sm" disabled={current === 1} onClick={() => onPage(current - 1)}>Sebelumnya</Button>
-      <span className="muted">Halaman {current} dari {pages}</span>
-      <Button variant="outline" size="sm" disabled={current === pages} onClick={() => onPage(current + 1)}>Berikutnya</Button>
-    </div>
-  </div>;
+  return (
+    <PaginationControls
+      count={count}
+      page={page}
+      pageSize={pageSize}
+      onPage={onPage}
+    />
+  );
 }
 export { SafetyDetail } from "./safety-detail";

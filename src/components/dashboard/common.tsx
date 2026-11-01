@@ -157,3 +157,54 @@ export function ExportButton({
     </Button>
   );
 }
+
+export function PaginationControls({
+  count,
+  page,
+  pageSize,
+  onPage,
+  compact = false,
+}: {
+  count: number;
+  page: number;
+  pageSize: number;
+  onPage: (page: number) => void;
+  compact?: boolean;
+}) {
+  if (count === 0) return null;
+  const pages = Math.max(1, Math.ceil(count / pageSize));
+  const current = Math.min(Math.max(1, page), pages);
+  const start = (current - 1) * pageSize + 1;
+  const end = Math.min(current * pageSize, count);
+
+  return (
+    <div className={`table-footer pagination-controls ${compact ? "compact" : ""}`}>
+      <span className="pagination-info">
+        {compact ? `${start}–${end} dari ${count}` : `${start} sampai ${end} dari ${count}`}
+      </span>
+      <div className="inline-controls">
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={current <= 1}
+          onClick={() => onPage(current - 1)}
+          className="h-7 text-xs px-2.5"
+        >
+          Sebelumnya
+        </Button>
+        <span className="pagination-page-label">
+          {compact ? `${current} / ${pages}` : `Halaman ${current} dari ${pages}`}
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={current >= pages}
+          onClick={() => onPage(current + 1)}
+          className="h-7 text-xs px-2.5"
+        >
+          Berikutnya
+        </Button>
+      </div>
+    </div>
+  );
+}

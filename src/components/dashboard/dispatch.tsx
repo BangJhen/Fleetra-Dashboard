@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,7 @@ import {
   Initials,
   EmptyState,
   time,
+  PaginationControls,
 } from "./common";
 import { Icon } from "./icons";
 import { useDebouncedSearch } from "./use-debounced-search";
@@ -27,7 +28,12 @@ export function Dispatch() {
   const data = useFleet((s) => s.data);
   const params = useSearchParams();
   const [filter, setFilter] = useState(params.get("status") || "all");
-  const search = useDebouncedSearch("", { delay: 350 });
+  const [page, setPage] = useState(1);
+  const pageSize = 12;
+  const search = useDebouncedSearch("", {
+    delay: 350,
+    onSearch: () => setPage(1),
+  });
   const [sort, setSort] = useState("new");
   const trips = data.trips
     .filter(
@@ -42,6 +48,10 @@ export function Dispatch() {
         ? b.createdAt.localeCompare(a.createdAt)
         : a.code.localeCompare(b.code),
     );
+  const paginatedTrips = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return trips.slice(start, start + pageSize);
+  }, [trips, page, pageSize]);
   return (
     <div className="page">
       <PageHeading
@@ -79,7 +89,7 @@ export function Dispatch() {
       </div>
       <section className="content-panel">
         <div className="table-toolbar">
-          <Tabs value={filter} onValueChange={setFilter}>
+          <Tabs value={filter} onValueChange={(v) => { setFilter(v); setPage(1); }}>
             <TabsList>
               {[
                 ["all", "Semua"],
@@ -140,7 +150,7 @@ export function Dispatch() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {trips.map((t) => {
+              {paginatedTrips.map((t) => {
                 const driver = data.drivers.find((d) => d.id === t.driverId);
                 const v = data.vehicles.find((v) => v.id === t.vehicleId);
                 const done = t.stops.filter(
@@ -211,9 +221,12 @@ export function Dispatch() {
             description="Ubah pencarian atau buat penugasan pertama."
           />
         )}
-        <div className="table-footer">
-          Menampilkan {trips.length} dari {data.trips.length} penugasan
-        </div>
+        <PaginationControls
+          count={trips.length}
+          page={page}
+          pageSize={pageSize}
+          onPage={setPage}
+        />
       </section>
     </div>
   );

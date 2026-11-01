@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { useFleet } from "./provider";
@@ -15,6 +15,7 @@ import {
   date,
   ExportButton,
   EmptyState,
+  PaginationControls,
 } from "./common";
 import { cn } from "@/lib/utils";
 import type { VehicleStatus } from "@/lib/types";
@@ -27,7 +28,12 @@ export function Tracking() {
     vehicles: stored.vehicles.filter((v) => !v.archivedAt),
     drivers: stored.drivers.filter((d) => !d.archivedAt),
   };
-  const search = useDebouncedSearch("", { delay: 350 });
+  const [page, setPage] = useState(1);
+  const pageSize = 25;
+  const search = useDebouncedSearch("", {
+    delay: 350,
+    onSearch: () => setPage(1),
+  });
   const [filter, setFilter] = useState<VehicleStatus | "all">("all");
   const [selected, setSelected] = useState<string | null>(null);
   const vehicles = data.vehicles.filter(
@@ -37,6 +43,10 @@ export function Tracking() {
         .toLowerCase()
         .includes(search.debouncedValue.toLowerCase()),
   );
+  const paginatedVehicles = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return vehicles.slice(start, start + pageSize);
+  }, [vehicles, page, pageSize]);
   const moving = data.vehicles.filter((v) => v.status === "moving").length;
   const idle = data.vehicles.filter((v) => v.status === "idle").length;
   const service = data.vehicles.filter((v) => v.status === "service").length;
@@ -153,7 +163,7 @@ export function Tracking() {
                 <button
                   key={s}
                   aria-pressed={filter === s}
-                  onClick={() => setFilter(s)}
+                  onClick={() => { setFilter(s); setPage(1); }}
                   className={cn(filter === s && "active")}
                 >
                   {["Semua", "Bergerak", "Idle", "Servis"][i]}
@@ -168,7 +178,7 @@ export function Tracking() {
                 description="Coba plat lain atau ubah filter status."
               />
             ) : (
-              vehicles.map((v) => {
+              paginatedVehicles.map((v) => {
                 const driver = data.drivers.find((d) => d.id === v.driverId);
                 return (
                   <button
@@ -196,6 +206,13 @@ export function Tracking() {
               })
             )}
           </div>
+          <PaginationControls
+            count={vehicles.length}
+            page={page}
+            pageSize={pageSize}
+            onPage={setPage}
+            compact
+          />
         </div>
         <FleetMap
           vehicles={vehicles}

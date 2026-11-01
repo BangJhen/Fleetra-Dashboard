@@ -1173,6 +1173,31 @@
   border-top: 1px solid var(--border);
   gap: 15px;
 }
+.pagination-controls {
+  user-select: none;
+}
+.pagination-controls.compact {
+  padding: 8px 12px;
+  border-top: 1px solid #f1f5f9;
+  background: #f8fafc;
+  gap: 8px;
+}
+.pagination-info {
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748b;
+}
+.pagination-page-label {
+  font-size: 11px;
+  font-weight: 550;
+  color: #475569;
+  padding: 0 4px;
+}
+.fleet-pagination {
+  padding: 10px 14px;
+  border-top: 1px solid #f1f5f9;
+  background: #ffffff;
+}
 .table-primary-link {
   font-size: 12px;
   font-weight: 600;

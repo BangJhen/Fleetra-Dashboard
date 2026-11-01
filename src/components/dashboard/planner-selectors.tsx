@@ -5,6 +5,7 @@ import { Icon } from "./icons";
 import { Button } from "@/components/ui/button";
 import type { Driver, Vehicle } from "@/lib/types";
 import { useDebouncedSearch } from "./use-debounced-search";
+import { PaginationControls } from "./common";
 
 interface Location {
   name: string;
@@ -45,7 +46,12 @@ export function LocationSearchSelect({
   isOrigin?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const search = useDebouncedSearch("", { delay: 350 });
+  const [page, setPage] = useState(1);
+  const pageSize = 6;
+  const search = useDebouncedSearch("", {
+    delay: 350,
+    onSearch: () => setPage(1),
+  });
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -78,6 +84,11 @@ export function LocationSearchSelect({
       .map((loc, idx) => ({ ...loc, originalIndex: idx }))
       .filter((loc) => loc.name.toLowerCase().includes(q) || loc.address.toLowerCase().includes(q));
   }, [locations, search.debouncedValue]);
+
+  const paginatedLocations = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredLocations.slice(start, start + pageSize);
+  }, [filteredLocations, page, pageSize]);
 
   return (
     <div className="stop-field" ref={containerRef}>
@@ -153,7 +164,7 @@ export function LocationSearchSelect({
                     Tidak ada lokasi yang cocok dengan &quot;{search.debouncedValue}&quot;
                   </div>
                 ) : (
-                  filteredLocations.map((loc) => {
+                  paginatedLocations.map((loc) => {
                     const isAlreadySelected = selectedIndices.includes(loc.originalIndex) && loc.originalIndex !== value;
                     const isCurrent = loc.originalIndex === value;
                     return (
@@ -186,6 +197,13 @@ export function LocationSearchSelect({
                   })
                 )}
               </div>
+              <PaginationControls
+                compact
+                count={filteredLocations.length}
+                page={page}
+                pageSize={pageSize}
+                onPage={setPage}
+              />
               <div className="combobox-footer-hint">
                 <span>{locations.length} titik logistik terdaftar di Bandung Raya</span>
               </div>
@@ -218,7 +236,12 @@ export function VehicleSearchSelect({
   onChange: (id: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const search = useDebouncedSearch("", { delay: 350 });
+  const [page, setPage] = useState(1);
+  const pageSize = 6;
+  const search = useDebouncedSearch("", {
+    delay: 350,
+    onSearch: () => setPage(1),
+  });
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -261,6 +284,11 @@ export function VehicleSearchSelect({
     }
     return list;
   }, [vehicles, search.debouncedValue, typeFilter]);
+
+  const paginatedVehicles = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredVehicles.slice(start, start + pageSize);
+  }, [filteredVehicles, page, pageSize]);
 
   return (
     <div className={`resource-selector-block ${isOpen ? "z-30" : "z-10"}`} ref={containerRef}>
@@ -358,7 +386,10 @@ export function VehicleSearchSelect({
               <button
                 key={t}
                 type="button"
-                onClick={() => setTypeFilter(t)}
+                onClick={() => {
+                  setTypeFilter(t);
+                  setPage(1);
+                }}
                 className={`filter-pill ${typeFilter === t ? "active" : ""}`}
               >
                 {t === "all" ? "Semua Tipe" : t.charAt(0).toUpperCase() + t.slice(1)}
@@ -372,7 +403,7 @@ export function VehicleSearchSelect({
                 Tidak ada kendaraan yang cocok dengan pencarian.
               </div>
             ) : (
-              filteredVehicles.map((v) => {
+              paginatedVehicles.map((v) => {
                 const isSelected = v.id === value;
                 return (
                   <button
@@ -409,6 +440,13 @@ export function VehicleSearchSelect({
               })
             )}
           </div>
+          <PaginationControls
+            compact
+            count={filteredVehicles.length}
+            page={page}
+            pageSize={pageSize}
+            onPage={setPage}
+          />
           <div className="combobox-footer-hint">
             <span>Menampilkan {filteredVehicles.length} dari {vehicles.length} armada tersedia</span>
           </div>
@@ -428,7 +466,12 @@ export function DriverSearchSelect({
   onChange: (id: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const search = useDebouncedSearch("", { delay: 350 });
+  const [page, setPage] = useState(1);
+  const pageSize = 6;
+  const search = useDebouncedSearch("", {
+    delay: 350,
+    onSearch: () => setPage(1),
+  });
   const [scoreFilter, setScoreFilter] = useState<string>("all");
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -476,6 +519,11 @@ export function DriverSearchSelect({
     }
     return list;
   }, [sortedDrivers, search.debouncedValue, scoreFilter]);
+
+  const paginatedDrivers = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredDrivers.slice(start, start + pageSize);
+  }, [filteredDrivers, page, pageSize]);
 
   return (
     <div className={`resource-selector-block ${isOpen ? "z-30" : "z-10"}`} ref={containerRef}>
@@ -576,21 +624,30 @@ export function DriverSearchSelect({
           <div className="resource-filter-pills">
             <button
               type="button"
-              onClick={() => setScoreFilter("all")}
+              onClick={() => {
+                setScoreFilter("all");
+                setPage(1);
+              }}
               className={`filter-pill ${scoreFilter === "all" ? "active" : ""}`}
             >
               Semua ({sortedDrivers.length})
             </button>
             <button
               type="button"
-              onClick={() => setScoreFilter("recommended")}
+              onClick={() => {
+                setScoreFilter("recommended");
+                setPage(1);
+              }}
               className={`filter-pill ${scoreFilter === "recommended" ? "active" : ""}`}
             >
               Rekomendasi (Score ≥ 85)
             </button>
             <button
               type="button"
-              onClick={() => setScoreFilter("medium")}
+              onClick={() => {
+                setScoreFilter("medium");
+                setPage(1);
+              }}
               className={`filter-pill ${scoreFilter === "medium" ? "active" : ""}`}
             >
               Score 75–84
@@ -603,7 +660,7 @@ export function DriverSearchSelect({
                 Tidak ada pengemudi yang cocok dengan kriteria pencarian.
               </div>
             ) : (
-              filteredDrivers.map((d) => {
+              paginatedDrivers.map((d) => {
                 const isSelected = d.id === value;
                 return (
                   <button
@@ -645,6 +702,13 @@ export function DriverSearchSelect({
               })
             )}
           </div>
+          <PaginationControls
+            compact
+            count={filteredDrivers.length}
+            page={page}
+            pageSize={pageSize}
+            onPage={setPage}
+          />
           <div className="combobox-footer-hint">
             <span>Daftar diurutkan berdasarkan Driver Safety Score tertinggi</span>
           </div>

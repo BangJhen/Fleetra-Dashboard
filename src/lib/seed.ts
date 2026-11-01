@@ -212,7 +212,7 @@ export function createSeed(): FleetState {
 
     return {
       id: `trip-${89 + i}`,
-      code: `TRIP-2026-${String(i + 1).padStart(3, "0")}`,
+      code: `TRIP-2026-${String(89 + i).padStart(3, "0")}`,
       vehicleId,
       driverId,
       status: status as "in_progress" | "assigned" | "completed",
@@ -303,7 +303,7 @@ export function createSeed(): FleetState {
         id: "n2",
         title: "Penugasan Bandung Kota berjalan",
         description:
-          "Budi Santoso menjalankan TRIP-2026-001. Dua dari empat titik telah selesai.",
+          "Budi Santoso menjalankan TRIP-2026-089. Dua dari lima titik telah selesai.",
         kind: "trip",
         href: "/dashboard/dispatch/trip-89",
         at: base.toISOString(),

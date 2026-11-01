@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -18,12 +18,20 @@ import {
   money,
   date,
   EmptyState,
+  PaginationControls,
 } from "./common";
 import { Icon } from "./icons";
 import { useDebouncedSearch } from "./use-debounced-search";
 export function Rto({ id }: { id?: string }) {
   const data = useFleet((s) => s.data);
-  const search = useDebouncedSearch("", { delay: 350 });
+  const [page, setPage] = useState(1);
+  const [ledgerPage, setLedgerPage] = useState(1);
+  const pageSize = 8;
+  const ledgerPageSize = 10;
+  const search = useDebouncedSearch("", {
+    delay: 350,
+    onSearch: () => setPage(1),
+  });
   const balance = (cid: string, opening: number) =>
     opening +
     data.ledger
@@ -35,6 +43,10 @@ export function Rto({ id }: { id?: string }) {
       ?.name.toLowerCase()
       .includes(search.debouncedValue.toLowerCase()),
   );
+  const paginatedContracts = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return contracts.slice(start, start + pageSize);
+  }, [contracts, page, pageSize]);
   if (id) {
     const c = data.contracts.find((c) => c.id === id);
     if (!c)
@@ -52,6 +64,10 @@ export function Rto({ id }: { id?: string }) {
     const paid = balance(c.id, c.openingBalance);
     const percent = (paid / c.total) * 100;
     const ledger = data.ledger.filter((l) => l.contractId === c.id);
+    const paginatedLedger = ledger.slice(
+      (ledgerPage - 1) * ledgerPageSize,
+      ledgerPage * ledgerPageSize,
+    );
     return (
       <div className="page">
         <BackLink href="/dashboard/finance/rto">
@@ -131,7 +147,7 @@ export function Rto({ id }: { id?: string }) {
                 <TableCell>Saldo awal simulasi, bukan transaksi bank</TableCell>
                 <TableCell>{money(c.openingBalance)}</TableCell>
               </TableRow>
-              {ledger.map((l) => (
+              {paginatedLedger.map((l) => (
                 <TableRow key={l.id}>
                   <TableCell>{date(l.at)}</TableCell>
                   <TableCell>
@@ -148,6 +164,12 @@ export function Rto({ id }: { id?: string }) {
               ))}
             </TableBody>
           </Table>
+          <PaginationControls
+            count={ledger.length}
+            page={ledgerPage}
+            pageSize={ledgerPageSize}
+            onPage={setLedgerPage}
+          />
           {ledger.length === 0 && (
             <div className="ledger-note">
               Belum ada setoran per trip yang tercatat pada ledger.
@@ -207,7 +229,7 @@ export function Rto({ id }: { id?: string }) {
           />
         </div>
         <div className="contract-list">
-          {contracts.map((c) => {
+          {paginatedContracts.map((c) => {
             const d = data.drivers.find((d) => d.id === c.driverId);
             const v = data.vehicles.find((v) => v.id === c.vehicleId);
             const paid = balance(c.id, c.openingBalance);
@@ -249,6 +271,12 @@ export function Rto({ id }: { id?: string }) {
             );
           })}
         </div>
+        <PaginationControls
+          count={contracts.length}
+          page={page}
+          pageSize={pageSize}
+          onPage={setPage}
+        />
         {contracts.length === 0 && (
           <EmptyState
             title="Kontrak tidak ditemukan"
