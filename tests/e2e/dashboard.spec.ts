@@ -74,7 +74,7 @@ test("ETLE no-match result persists and accepts internal dispute review", async 
   page,
 }) => {
   await page
-    .getByRole("link", { name: "Rekonsiliasi ETLE", exact: true })
+    .getByRole("link", { name: "Tilang ETLE", exact: true })
     .click();
   await page.getByLabel("Nomor referensi tilang").fill(`QA-${Date.now()}`);
   await page.getByLabel("Plat kendaraan", { exact: true }).fill("D 0000 XYZ");
@@ -87,7 +87,7 @@ test("ETLE no-match result persists and accepts internal dispute review", async 
   await expect(page.getByText("Disengketakan", { exact: true })).toBeVisible();
 });
 test("ETLE example cases show credible trip evidence and remain reviewable", async ({ page }) => {
-  await page.getByRole("link", { name: "Rekonsiliasi ETLE", exact: true }).click();
+  await page.getByRole("link", { name: "Tilang ETLE", exact: true }).click();
   const example = page.locator(".etle-cases tbody tr").filter({ hasText: "BDG ETLE 2026 001" });
   await expect(example).toBeVisible();
   expect(await page.locator(".etle-cases tbody tr").count()).toBeGreaterThanOrEqual(3);
@@ -113,7 +113,7 @@ test("finance, health, management, notifications and logout are reachable", asyn
 }) => {
   for (const [link, title] of [
     ["Keselamatan armada", "Keselamatan armada"],
-    ["Ekuitas RTO", "Ekuitas RTO"],
+    ["Sewa-Beli", "Sewa-Beli"],
     ["Data armada", "Data armada"],
     ["Data pengemudi", "Data pengemudi"],
   ]) {

@@ -160,8 +160,8 @@ export function Rto({ id }: { id?: string }) {
   return (
     <div className="page">
       <PageHeading
-        title="Ekuitas RTO"
-        description="Pantau langkah setiap mitra menuju kepemilikan armada."
+        title="Sewa-Beli"
+        description="Pantau progres cicilan dan kepemilikan armada mitra pengemudi."
       />
       <div className="finance-overview">
         <div>

@@ -157,8 +157,8 @@ export function Etle({ id }: { id?: string }) {
   return (
     <div className="page">
       <PageHeading
-        title="Rekonsiliasi ETLE"
-        description="Telusuri penugasan yang relevan. Tinjau dengan bukti yang tersedia."
+        title="Tilang ETLE"
+        description="Cocokkan bukti kamera tilang elektronik dengan riwayat perjalanan armada."
       />
       <div className="etle-layout">
         <section className="content-panel etle-form">

@@ -72,3 +72,4 @@ export function useDebouncedSearch(
     isDebouncing: inputVal.trim() !== debouncedVal,
   };
 }
+

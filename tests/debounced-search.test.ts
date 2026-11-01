@@ -91,3 +91,4 @@ describe("Search debouncing and trigger integrity", () => {
     assert.equal(triggered, 0);
   });
 });
+

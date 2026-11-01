@@ -22,9 +22,9 @@ const nav: { label: string; href: string; icon: IconName; sub?: boolean }[] = [
     icon: "dispatch",
   },
   { label: "Keselamatan armada", href: "/dashboard/safety", icon: "safety" },
-  { label: "Ekuitas RTO", href: "/dashboard/finance/rto", icon: "finance" },
+  { label: "Sewa-Beli", href: "/dashboard/finance/rto", icon: "finance" },
   {
-    label: "Rekonsiliasi ETLE",
+    label: "Tilang ETLE",
     href: "/dashboard/finance/etle",
     icon: "route",
   },
