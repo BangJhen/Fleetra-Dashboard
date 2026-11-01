@@ -50,6 +50,8 @@ export function Brand({ sidebar = false }: { sidebar?: boolean }) {
         width={1460}
         height={292}
         priority
+        className="brand-img"
+        style={{ width: "100%", height: "100%", objectFit: "contain" }}
       />
     </div>
   );

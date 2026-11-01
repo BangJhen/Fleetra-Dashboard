@@ -225,20 +225,24 @@
   padding: 21px 16px 0;
 }
 .brand {
-  height: 40px;
-  width: 155px;
+  height: 28px;
+  width: 140px;
   max-width: 100%;
   position: relative;
   margin: 0 10px 24px;
   display: flex;
   align-items: center;
+  flex-shrink: 0;
+  overflow: hidden;
 }
-.brand img {
+.brand img,
+.brand .brand-img {
   position: static;
   width: 100%;
-  height: auto;
+  height: 100%;
   max-height: 100%;
   object-fit: contain;
+  display: block;
 }
 .workspace-switch {
   padding: 12px 9px;
@@ -2348,18 +2352,22 @@
 .login-brand {
   display: flex;
   align-items: center;
-  gap: 25px;
+  gap: 18px;
 }
 .login-brand .brand {
   margin: 0;
-  width: 155px;
-  height: 40px;
+  width: 140px;
+  height: 28px;
+  flex-shrink: 0;
+  overflow: hidden;
 }
 .login-brand > span {
-  font-size: 10px;
+  font-size: 11px;
   color: #64748b;
   border-left: 1px solid var(--border);
-  padding-left: 22px;
+  padding-left: 18px;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 .login-content {
   display: grid;
@@ -3305,21 +3313,24 @@
     min-height: 100svh;
   }
   .login-brand {
-    gap: 16px;
+    gap: 14px;
   }
   .login-brand > span {
-    font-size: 9px;
-    padding-left: 13px;
+    font-size: 10px;
+    padding-left: 14px;
   }
   .login-brand .brand {
-    width: 130px;
-    height: 34px;
+    width: 120px;
+    height: 24px;
+    flex-shrink: 0;
   }
-  .login-brand .brand img {
+  .login-brand .brand img,
+  .login-brand .brand .brand-img {
     position: static;
     width: 100%;
-    height: auto;
+    height: 100%;
     object-fit: contain;
+    display: block;
   }
   .login-content {
     display: block;
@@ -3686,21 +3697,24 @@
 }
 /* Preserve the supplied text logo in full on desktop and mobile sidebars. */
 .brand.brand-sidebar {
-  width: 165px;
+  width: 150px;
   max-width: calc(100% - 12px);
-  height: 42px;
+  height: 30px;
   margin: 0 6px 24px;
   clip-path: none;
-  overflow: visible;
+  overflow: hidden;
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
-.brand.brand-sidebar img {
+.brand.brand-sidebar img,
+.brand.brand-sidebar .brand-img {
   position: static;
   width: 100%;
-  height: auto;
+  height: 100%;
   max-height: 100%;
   object-fit: contain;
+  display: block;
 }
 .safety-panels {
   display: flex;
