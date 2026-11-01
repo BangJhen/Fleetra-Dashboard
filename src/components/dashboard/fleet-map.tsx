@@ -100,7 +100,7 @@ function Controls({
         aria-label="Perbesar peta"
         onClick={() => map.zoomIn()}
       >
-        <Icon name="plus" />
+        <Icon name="zoomIn" />
       </Button>
       <Button
         variant="outline"
@@ -108,7 +108,7 @@ function Controls({
         aria-label="Perkecil peta"
         onClick={() => map.zoomOut()}
       >
-        <span className="minus-icon" />
+        <Icon name="zoomOut" />
       </Button>
       <Button
         variant="outline"

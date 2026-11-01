@@ -190,7 +190,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               title="Muat ulang data dashboard"
             >
               <span className="topbar-sync-icon">
-                <Icon name={online ? "check" : "refresh"} />
+                <Icon name={online ? "signal" : "refresh"} />
               </span>
               <span className="topbar-sync-copy">
                 <strong>

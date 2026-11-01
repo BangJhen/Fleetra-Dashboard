@@ -11,13 +11,18 @@ export type IconName =
   | "chevron"
   | "plus"
   | "arrow"
+  | "back"
   | "close"
   | "settings"
   | "logout"
   | "menu"
   | "locate"
+  | "zoomIn"
+  | "zoomOut"
   | "layers"
   | "check"
+  | "checkAll"
+  | "signal"
   | "download"
   | "pause"
   | "play"
@@ -82,6 +87,7 @@ const paths: Record<IconName, React.ReactNode> = {
   chevron: <path d="m9 5 7 7-7 7" />,
   plus: <path d="M12 5v14M5 12h14" />,
   arrow: <path d="M4 12h15m-5-5 5 5-5 5" />,
+  back: <path d="m15 18-6-6 6-6" />,
   close: <path d="m6 6 12 12M18 6 6 18" />,
   settings: (
     <>
@@ -103,12 +109,34 @@ const paths: Record<IconName, React.ReactNode> = {
       <circle cx="12" cy="12" r="1" />
     </>
   ),
+  zoomIn: (
+    <>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m21 21-4.3-4.3M11 8v6M8 11h6" />
+    </>
+  ),
+  zoomOut: (
+    <>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m21 21-4.3-4.3M8 11h6" />
+    </>
+  ),
   layers: (
     <>
       <path d="m3 8 9-5 9 5-9 5-9-5Zm0 5 9 5 9-5M3 18l9 5 9-5" />
     </>
   ),
   check: <path d="m5 12 4 4L19 6" />,
+  checkAll: (
+    <>
+      <path d="m3 12 4 4L17 6M8 12l4 4 8-8" />
+    </>
+  ),
+  signal: (
+    <>
+      <path d="M2 20h.01M7 20v-4M12 20v-8M17 20V4" />
+    </>
+  ),
   download: <path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5" />,
   pause: <path d="M8 5v14M16 5v14" />,
   play: <path d="m8 4 12 8-12 8V4Z" />,

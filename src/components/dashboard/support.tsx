@@ -47,7 +47,7 @@ export function Notifications() {
             }
           }}
         >
-          <Icon name="check" />
+          <Icon name="checkAll" />
           Tandai semua dibaca
         </Button>
       </PageHeading>

@@ -72,7 +72,7 @@ export function BackLink({
 }) {
   return (
     <Link className="back-link" href={href}>
-      <Icon name="arrow" style={{ transform: "rotate(180deg)" }} />
+      <Icon name="back" />
       {children}
     </Link>
   );
