@@ -1,6 +1,6 @@
 # FLEETRA Dispatcher Dashboard
 
-Pusat kendali dan manajemen armada cerdas (Intelligent Fleet Management System) untuk operator logistik pada kompetisi ADIKARA 2026. Dashboard ini berfungsi memantau pergerakan armada secara waktu nyata, mengotomatisasi perencanaan rute ritase logistik multi-drop, memvalidasi verifikasi mitra pengemudi (Know Your Driver / KYD), memantau keselamatan berkendara berbasis telematika, serta mengelola skema kemitraan Sewa-Beli (Rent-to-Own / RTO) dan tilang elektronik (ETLE).
+Pusat kendali dan manajemen armada cerdas (Intelligent Fleet Management System) terintegrasi untuk perusahaan logistik, ekspedisi, dan operator transportasi. Dashboard ini berfungsi memantau pergerakan armada secara waktu nyata, mengotomatisasi perencanaan rute ritase logistik multi-drop, memvalidasi verifikasi mitra pengemudi (Know Your Driver / KYD), memantau keselamatan berkendara berbasis telematika, serta mengelola skema kemitraan Sewa-Beli (Rent-to-Own / RTO) dan rekonsiliasi tilang elektronik (ETLE).
 
 ## Alur Kerja Sistem (Workflow)
 
@@ -37,74 +37,52 @@ Pusat kendali dan manajemen armada cerdas (Intelligent Fleet Management System) 
 
 ## Spesifikasi Antarmuka Pemrograman Aplikasi (API Endpoints)
 
-Dashboard menyediakan RESTful API berbasis Next.js App Router untuk kebutuhan konsol web internal dan sinkronisasi dengan aplikasi mobile pengemudi:
+Dashboard menyediakan RESTful API berbasis Next.js App Router untuk konsol web dispatcher dan sinkronisasi dengan aplikasi mobile pengemudi:
 
-### Modul Konsol Operator Web
+### 1. Endpoint Konsol Web Operator
 
-- POST /api/auth
-  Autentikasi akun dispatcher atau manajer logistik.
-  Menerima: email, password.
-  Mengembalikan: token sesi, data profil operator, dan peran pengguna (manager, dispatcher, analyst).
+| Method | Endpoint | Deskripsi | Parameter / Payload | Respons / Output |
+| --- | --- | --- | --- | --- |
+| POST | /api/auth | Autentikasi sesi operator atau manajer logistik | email, password | Token sesi, profil operator, hak akses (role) |
+| POST | /api/register | Pendaftaran akun operator baru di depo | nama, email, password, role | Konfirmasi registrasi dan status akun |
+| GET | /api/fleet | Sinkronisasi seluruh snapshot master data operasional | - | Data 142 armada, direktori driver, ritase, alert, kontrak RTO, insiden ETLE |
+| POST | /api/fleet | Mutasi data armada, pengemudi, dan penugasan | action, payload terkait | Status mutasi data dan state termutakhir |
+| POST | /api/optimize | Engine optimasi rute multi-drop (TSP & OSRM) | origin (depo), stops (koordinat tujuan) | Urutan singgah optimal, total jarak (km), estimasi durasi, geometri polyline |
+| GET | /api/trips/[id]/route | Detail segmen polyline rute OSRM | id (path parameter) | Koordinat polyline rute spesifik untuk visualisasi peta |
 
-- POST /api/register
-  Registrasi akun petugas operator baru di pusat kendali depo.
-  Menerima: nama lengkap, email, password, peran operasional.
+### 2. Endpoint Sinkronisasi Aplikasi Mobile Pengemudi
 
-- GET /api/fleet
-  Mengambil seluruh snapshot data operasional secara konsolidasi.
-  Mengembalikan: daftar 142 armada kendaraan, direktori mitra pengemudi, riwayat ritase, metrik keselamatan, daftar kontrak RTO, insiden ETLE, dan antrean alert telematika.
+| Method | Endpoint | Deskripsi | Parameter / Payload | Respons / Output |
+| --- | --- | --- | --- | --- |
+| POST | /api/mobile/auth | Autentikasi login akun mitra pengemudi | email, password | Token sesi, driverId, status KYD, profil lengkap mitra |
+| POST | /api/mobile/register | Pendaftaran mandiri mitra baru dari aplikasi mobile | nama, email, telepon, nomor SIM, password | Akun mitra baru berstatus pending_verification |
+| GET | /api/mobile | Polling data real-time berkala untuk pengemudi | driverId (query parameter) | Status akun, unit armada terpasang, penugasan aktif, titik singgah, ekuitas RTO |
+| POST | /api/mobile | Penerimaan aksi lapangan yang dieksekusi pengemudi | action, payload spesifik aksi | Konfirmasi pembaruan status tugas lapangan |
 
-- POST /api/fleet
-  Menjalankan aksi mutasi data operasional armada dan mitra. Mendukung parameter aksi:
-  - allocate_driver: Memvalidasi dan memasangkan unit kendaraan siaga ke pengemudi, menetapkan skema (pool atau RTO), menghitung cicilan per ritase, dan memperbarui status akun mitra menjadi terverifikasi.
-  - create_trip: Membuat jadwal penugasan ritase baru beserta urutan titik singgah pengantaran.
-  - update_vehicle: Memperbarui kondisi fisik, status pemeliharaan, atau parameter telematika unit.
-  - update_driver: Memperbarui data profil mitra, nomor lisensi SIM, atau status verifikasi KYD.
-  - reconcile_etle: Memverifikasi dan memotong denda tilang elektronik ke saldo ritase pengemudi.
+### 3. Rincian Aksi Lapangan Pengemudi (POST /api/mobile)
 
-- POST /api/optimize
-  Engine optimasi rute ritase berbasis algoritma Traveling Salesperson Problem (TSP) dan OSRM.
-  Menerima: titik koordinat depo asal dan daftar koordinat titik singgah tujuan pengantaran.
-  Mengembalikan: urutan singgah teroptimasi, jarak total (kilometer), estimasi durasi tempuh, dan garis polyline geometri rute.
-
-- GET /api/trips/[id]/route
-  Mengambil detail segmen polyline rute OSRM untuk visualisasi penugasan ritase spesifik di peta.
-
-### Modul Sinkronisasi Aplikasi Mobile Pengemudi
-
-- POST /api/mobile/auth
-  Autentikasi akun mitra pengemudi pada aplikasi mobile.
-  Menerima: email dan password pengemudi.
-  Mengembalikan: ID pengemudi, token autentikasi, status verifikasi KYD, serta profil lengkap mitra.
-
-- POST /api/mobile/register
-  Pendaftaran mandiri mitra pengemudi baru dari aplikasi mobile.
-  Menerima: nama, email, nomor telepon, nomor SIM, password.
-  Mengembalikan: akun baru berstatus pending_verification yang otomatis tersinkronisasi ke antrean persetujuan dispatcher.
-
-- GET /api/mobile
-  Polling sinkronisasi data real-time untuk aplikasi mobile pengemudi.
-  Parameter kueri: driverId.
-  Mengembalikan: status verifikasi akun, unit armada yang dialokasikan, data penugasan ritase aktif, daftar titik singgah e-POD, statistik keselamatan harian, dan saldo ekuitas cicilan RTO.
-
-- POST /api/mobile
-  Menerima aksi lapangan yang dieksekusi oleh mitra pengemudi:
-  - submit_epod: Mengunggah berkas foto serah terima kargo, tanda tangan digital penerima (kanvas SVG), stempel koordinat GPS, dan nama penerima paket.
-  - start_trip: Mengonfirmasi inisiasi perjalanan tugas ritase aktif oleh pengemudi.
-  - complete_stop: Menandai penyelesaian pengantaran pada titik singgah tertentu.
-  - complete_trip: Menyelesaikan seluruh ritase pengiriman harian.
-  - update_duty: Mengalihkan status kerja pengemudi antara siaga (ON) dan istirahat (OFF).
-  - sos: Meneruskan sinyal darurat (insiden kecelakaan, gangguan keamanan, kerusakan mesin) beserta koordinat lokasi ke konsol dispatcher.
+| Action | Fungsi Operasional | Parameter Kunci |
+| --- | --- | --- |
+| submit_epod | Mengunggah bukti serah terima paket digital | tripId, stopId, recipientName, signatureData (SVG), photoUri, latitude, longitude, completedAt |
+| start_trip | Mengonfirmasi inisiasi perjalanan rute tugas aktif | tripId, startedAt |
+| complete_stop | Menandai penyelesaian pengantaran di titik tertentu | tripId, stopId, status (selesai) |
+| complete_trip | Menyelesaikan seluruh rangkaian tugas ritase harian | tripId, completedAt, totalDistanceKm |
+| update_duty | Mengalihkan status siaga pengemudi | driverId, status (Aktif / Istirahat) |
+| sos | Mengirimkan alarm insiden darurat ke konsol dispatcher | driverId, emergencyType, latitude, longitude, timestamp |
 
 ## Tumpukan Teknologi (Tech Stack)
 
-- Framework: Next.js 16 (App Router), React 19, TypeScript
-- Styling: Tailwind CSS v4, komponen UI shadcn/ui berbasis Radix UI Primitives
-- Peta dan Geospasial: Leaflet, React Leaflet, MapLibre GL, OpenFreeMap, Open Source Routing Machine (OSRM)
-- Manajemen State: Zustand (inklusif sinkronisasi state live-tracking)
-- Database: MariaDB via mysql2 dengan sinkronisasi in-memory data store
-- Ikonografi: Lucide React
-- Desain Antarmuka: 100% Light Mode mutlak mengacu pada panduan DESIGN.md (warna primer #2463D8, latar #FFFFFF dan #F8FAFC, tipografi Plus Jakarta Sans dan Inter)
+| Kategori | Teknologi | Keterangan & Penggunaan |
+| --- | --- | --- |
+| Frontend Framework | Next.js 16 (App Router), React 19 | Server & Client Components dengan rendering performa tinggi |
+| Bahasa Pemrograman | TypeScript 5 | Pengetikan statis ketat di seluruh modul antarmuka dan API |
+| Desain & Styling | Tailwind CSS v4, shadcn/ui | Komponen UI aksesibel berbasis Radix UI Primitives (100% Light Mode) |
+| Peta & Geospasial | Leaflet, React Leaflet, MapLibre GL | Visualisasi interaktif armada logistik Jawa Barat dan heading marker |
+| Routing Engine | OSRM, OpenFreeMap | Algoritma optimasi Traveling Salesperson Problem (TSP) multi-drop |
+| Manajemen State | Zustand | State management reaktif untuk data live tracking dan filter armada |
+| Basis Data | MariaDB via mysql2 | Penyimpanan data relasional dengan sinkronisasi in-memory store |
+| Ikonografi | Lucide React | Ikon visual konsisten, modern, dan ringan |
+| Tipografi | Plus Jakarta Sans & Inter | Font enterprise berlisensi open-source dibundel secara lokal |
 
 ## Panduan Menjalankan Sistem
 
@@ -113,20 +91,20 @@ Persyaratan:
 - npm versi 10 atau lebih baru
 - MariaDB / MySQL server aktif secara lokal
 
-Instalasi dan Konfigurasi:
+Instalasi Dependensi:
 
 ```bash
 cd Fleetra-Dashboard
 npm install
 ```
 
-Menjalankan server pengembangan:
+Menjalankan Server Pengembangan:
 
 ```bash
 npm run dev
 ```
 
-Aplikasi web dapat diakses pada alamat http://localhost:3000. Untuk mengakses konsol dispatcher secara langsung, tekan tombol Buka Dashboard Demo pada halaman depan, atau gunakan kredensial berikut:
+Aplikasi web dapat diakses melalui peramban pada alamat http://localhost:3000. Untuk mengakses konsol dispatcher secara langsung, tekan tombol Buka Dashboard Demo pada halaman depan, atau gunakan kredensial berikut:
 - Email: manager@fleetra.demo
 - Kata Sandi: Fleetra2026!
 
