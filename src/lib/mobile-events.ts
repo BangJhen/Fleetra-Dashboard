@@ -7,14 +7,19 @@ export interface MobileEvent {
     | "stop.pickup_confirmed"
     | "stop.failed"
     | "epod.submitted"
-    | "sos.sent";
-  tripId: string;
+    | "sos.sent"
+    | "profile.updated";
+  tripId?: string;
   stopId?: string;
   recipient?: string;
   photo?: string;
   signature?: string;
   reason?: string;
   key?: string;
+  phone?: string;
+  name?: string;
+  vehicleModel?: string;
+  vehiclePlate?: string;
 }
 const validImage = (value: unknown): value is string =>
   typeof value === "string" &&
@@ -27,6 +32,43 @@ export function applyMobileEvent(
   driverId: string,
   event: MobileEvent,
 ) {
+  if (event.type === "profile.updated") {
+    const driver = s.drivers.find((d) => d.id === driverId);
+    if (!driver) throw Error("Pengemudi tidak ditemukan.");
+    if (event.phone !== undefined) driver.phone = event.phone.trim().slice(0, 30);
+    if (event.name !== undefined) driver.name = event.name.trim().slice(0, 100);
+    if (event.vehiclePlate && event.vehicleModel) {
+      const plate = event.vehiclePlate.trim().toUpperCase();
+      const model = event.vehicleModel.trim();
+      const existingV = s.vehicles.find((veh) => veh.driverId === driverId || veh.plate === plate);
+      if (existingV) {
+        existingV.plate = plate;
+        existingV.model = model;
+        existingV.driverId = driverId;
+      } else {
+        s.vehicles.push({
+          id: `v_${driverId}`,
+          plate,
+          model,
+          type: "van",
+          status: "idle",
+          driverId,
+          lat: -6.914744,
+          lng: 107.609810,
+          heading: 0,
+          speed: 0,
+          fuel: 100,
+          brake: 100,
+          odometer: 0,
+          health: 100,
+          location: "Bandung, Jawa Barat",
+          version: 1,
+        });
+      }
+    }
+    return { id: driver.id };
+  }
+  if (!event.tripId) throw Error("ID penugasan wajib disertakan.");
   const trip = s.trips.find(
     (t) => t.id === event.tripId && t.driverId === driverId,
   );
@@ -135,6 +177,10 @@ export function applyMobileEvent(
     if (v) {
       v.status = "idle";
       v.speed = 0;
+    }
+    const d = s.drivers.find((d) => d.id === trip.driverId);
+    if (d) {
+      d.trips = (d.trips || 0) + 1;
     }
     const contract = s.contracts.find(
       (c) => c.driverId === trip.driverId && c.vehicleId === trip.vehicleId,

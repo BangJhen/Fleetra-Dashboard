@@ -1,6 +1,5 @@
 import { inferVehicleType, vehicleTypes } from "./vehicle-types";
-import type { VehicleType } from "./types";
-import type { FleetState } from "./types";
+import type { VehicleType, Driver, FleetState } from "./types";
 import { activeTrip } from "./domain";
 export type MasterKind = "vehicles" | "drivers";
 export type MasterRequest = {
@@ -103,23 +102,51 @@ export function changeMaster(s: FleetState, b: MasterRequest) {
     const phone = typeof values.phone === "string" ? values.phone.trim() : "";
     if (phone && !/^\+?[0-9 ()-]{7,25}$/.test(phone))
       throw Error("Nomor telepon tidak valid.");
+    const email =
+      typeof values.email === "string" && values.email.trim()
+        ? values.email.trim().toLowerCase()
+        : undefined;
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      throw Error("Format email tidak valid.");
     const safety = score(values.score, "Skor simulasi");
+    const simNumber =
+      typeof values.simNumber === "string" ? values.simNumber.trim() : undefined;
+    const verificationStatus =
+      values.verificationStatus === "pending"
+        ? "pending"
+        : values.verificationStatus === "rejected"
+        ? "rejected"
+        : "verified";
     if (record)
       Object.assign(record, {
         name,
+        email:
+          email ||
+          (record as Driver).email ||
+          `${name.toLowerCase().replace(/[^a-z0-9]/g, ".")}@fleetra.id`,
         phone,
         score: safety,
+        simNumber: simNumber || (record as Driver).simNumber,
+        verificationStatus:
+          values.verificationStatus !== undefined
+            ? verificationStatus
+            : (record as Driver).verificationStatus || "verified",
         version: (record.version || 0) + 1,
       });
     else
       s.drivers.unshift({
         id: crypto.randomUUID(),
         name,
+        email:
+          email ||
+          `${name.toLowerCase().replace(/[^a-z0-9]/g, ".")}@fleetra.id`,
         phone,
         score: safety,
         trips: 0,
         braking: 0,
         speeding: 0,
+        simNumber: simNumber || "SIM B1 Umum",
+        verificationStatus,
         creationKey: b.key,
         version: 1,
       });

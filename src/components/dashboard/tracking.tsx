@@ -37,11 +37,12 @@ export function Tracking() {
   const [filter, setFilter] = useState<VehicleStatus | "all">("all");
   const [selected, setSelected] = useState<string | null>(null);
   const vehicles = data.vehicles.filter(
-    (v) =>
-      (filter === "all" || v.status === filter) &&
-      `${v.plate} ${v.model} ${vehicleTypeLabels[vehicleType(v)]} ${data.drivers.find((d) => d.id === v.driverId)?.name}`
-        .toLowerCase()
-        .includes(search.debouncedValue.toLowerCase()),
+    (v) => {
+      if (filter !== "all" && v.status !== filter) return false;
+      const d = data.drivers.find((d) => d.id === v.driverId);
+      const haystack = `${v.plate} ${v.model} ${vehicleTypeLabels[vehicleType(v)]} ${d?.name || ""} ${d?.email || ""} ${d?.phone || ""}`.toLowerCase();
+      return haystack.includes(search.debouncedValue.toLowerCase());
+    },
   );
   const paginatedVehicles = useMemo(() => {
     const start = (page - 1) * pageSize;

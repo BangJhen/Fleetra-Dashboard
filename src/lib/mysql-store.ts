@@ -58,7 +58,11 @@ async function load(
       "SELECT * FROM locations WHERE company_id=? ORDER BY location_index",
       [id],
     ),
-    rows(c, "SELECT * FROM drivers WHERE company_id=? ORDER BY id", [id]),
+    rows(
+      c,
+      "SELECT d.*, u.email as user_email FROM drivers d LEFT JOIN users u ON d.user_id = u.id WHERE d.company_id=? ORDER BY d.id",
+      [id],
+    ),
     rows(c, "SELECT * FROM vehicles WHERE company_id=? ORDER BY id", [id]),
     rows(c, "SELECT * FROM trips WHERE company_id=? ORDER BY id", [id]),
     rows(
@@ -170,12 +174,26 @@ async function load(
       drivers: drivers.map((r) => ({
         id: external(r, "drivers"),
         name: r.full_name,
+        email:
+          r.user_email ||
+          (r.external_id === "d1"
+            ? "driver@fleetra.id"
+            : r.external_id === "d2"
+              ? "ahmad.fauzi@fleetra.id"
+              : `${r.full_name.toLowerCase().replace(/[^a-z0-9]/g, ".")}@fleetra.id`),
         phone: r.phone || "",
         score: r.safety_score,
         trips: r.trip_count,
         braking: r.braking_count,
         speeding: r.speeding_count,
         version: r.version,
+        verificationStatus:
+          r.status === "pending_verification"
+            ? "pending"
+            : r.status === "rejected"
+              ? "rejected"
+              : "verified",
+        simNumber: r.sim_number || "",
         ...(r.creation_key ? { creationKey: r.creation_key } : {}),
         ...(r.archived_at ? { archivedAt: iso(r.archived_at) } : {}),
       })),
@@ -196,6 +214,13 @@ async function load(
         health: r.health_score,
         location: r.location_label || "",
         version: r.version,
+        verificationStatus:
+          r.status === "pending_verification"
+            ? "pending"
+            : r.status === "rejected"
+              ? "rejected"
+              : "verified",
+        simNumber: r.sim_number || "",
         ...(r.creation_key ? { creationKey: r.creation_key } : {}),
         ...(r.archived_at ? { archivedAt: iso(r.archived_at) } : {}),
       })),
@@ -339,6 +364,12 @@ async function save(
         version: d.version || 0,
         creation_key: d.creationKey || null,
         archived_at: sqlDate(d.archivedAt),
+        status:
+          d.verificationStatus === "pending"
+            ? "pending_verification"
+            : d.verificationStatus === "rejected"
+              ? "rejected"
+              : "available",
       },
       oldBy(old?.drivers, d.id),
       d,

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import type { Driver, Vehicle } from "@/lib/types";
 import { useDebouncedSearch } from "./use-debounced-search";
 import { PaginationControls } from "./common";
+import { useFleet } from "./provider";
 
 interface Location {
   name: string;
@@ -465,6 +466,7 @@ export function DriverSearchSelect({
   drivers: Driver[];
   onChange: (id: string) => void;
 }) {
+  const allVehicles = useFleet((s) => s.data.vehicles);
   const [isOpen, setIsOpen] = useState(false);
   const [page, setPage] = useState(1);
   const pageSize = 6;
@@ -511,14 +513,20 @@ export function DriverSearchSelect({
     }
     if (search.debouncedValue.trim()) {
       const q = search.debouncedValue.toLowerCase();
-      list = list.filter(
-        (d) =>
+      list = list.filter((d) => {
+        const refPlate = allVehicles.find((v) => !v.archivedAt && v.driverId === d.id)?.plate.toLowerCase() || "";
+        const email = (d.email || `${d.name.toLowerCase().replace(/[^a-z0-9]/g, ".")}@fleetra.id`).toLowerCase();
+        const phone = (d.phone || "").toLowerCase();
+        return (
           d.name.toLowerCase().includes(q) ||
-          (d.phone && d.phone.toLowerCase().includes(q))
-      );
+          email.includes(q) ||
+          phone.includes(q) ||
+          refPlate.includes(q)
+        );
+      });
     }
     return list;
-  }, [sortedDrivers, search.debouncedValue, scoreFilter]);
+  }, [sortedDrivers, search.debouncedValue, scoreFilter, allVehicles]);
 
   const paginatedDrivers = useMemo(() => {
     const start = (page - 1) * pageSize;
@@ -603,7 +611,7 @@ export function DriverSearchSelect({
             <input
               ref={inputRef}
               type="text"
-              placeholder="Cari nama pengemudi atau nomor kontak..."
+              placeholder="Cari nama, email, kontak, atau plat armada..."
               value={search.value}
               onChange={search.onChange}
               onKeyDown={search.onKeyDown}
@@ -662,6 +670,8 @@ export function DriverSearchSelect({
             ) : (
               paginatedDrivers.map((d) => {
                 const isSelected = d.id === value;
+                const refV = allVehicles.find((v) => !v.archivedAt && v.driverId === d.id);
+                const email = d.email || `${d.name.toLowerCase().replace(/[^a-z0-9]/g, ".")}@fleetra.id`;
                 return (
                   <button
                     key={d.id}
@@ -675,9 +685,11 @@ export function DriverSearchSelect({
                   >
                     <div className="resource-item-left min-w-0 flex-1 overflow-hidden">
                       <div className="resource-item-title-row flex items-center gap-1.5 min-w-0 w-full overflow-hidden whitespace-nowrap">
-                        <strong className="resource-driver-name flex-1 min-w-0 truncate text-[12px] font-semibold text-slate-900" title={d.name}>{d.name}</strong>
+                        <strong className="resource-driver-name min-w-0 truncate text-[12px] font-semibold text-slate-900" title={d.name}>{d.name}</strong>
+                        <span className="text-[10.5px] text-primary truncate max-w-[130px]">{email}</span>
+                        {refV && <span className="text-[10.5px] text-slate-500 shrink-0 font-medium">({refV.plate})</span>}
                         <span
-                          className={`safety-badge-pill shrink-0 whitespace-nowrap ${
+                          className={`safety-badge-pill shrink-0 whitespace-nowrap ml-auto ${
                             d.score >= 85 ? "high" : "medium"
                           }`}
                         >
@@ -685,7 +697,8 @@ export function DriverSearchSelect({
                         </span>
                       </div>
                       <div className="resource-item-stats flex items-center gap-2 overflow-hidden whitespace-nowrap flex-nowrap">
-                        <span className="stat-pill shrink-0 whitespace-nowrap">{d.trips} perjalanan selesai</span>
+                        <span className="stat-pill shrink-0 whitespace-nowrap">{d.trips} trip selesai</span>
+                        {d.phone ? <span className="stat-pill shrink-0 whitespace-nowrap">{d.phone}</span> : null}
                         <span className="stat-pill shrink-0 whitespace-nowrap">Rem: {d.braking}x</span>
                         <span className="stat-pill shrink-0 whitespace-nowrap">Speed: {d.speeding}x</span>
                       </div>

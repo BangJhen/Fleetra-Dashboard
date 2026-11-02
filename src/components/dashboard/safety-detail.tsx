@@ -16,6 +16,7 @@ import { historyFor } from "@/lib/safety-history";
 import { TrendChart, BarChart } from "./safety-charts";
 import { HistoryTable, snapshotSource } from "./safety-panels";
 import { SafetyRecord } from "./safety-record";
+import { DriverAllocationModal } from "./driver-allocation-modal";
 export function SafetyDetail({
   kind,
   id,
@@ -24,8 +25,11 @@ export function SafetyDetail({
   id: string;
 }) {
   const data = useFleet((s) => s.data);
+  const refresh = useFleet((s) => s.refresh);
   const [days, setDays] = useState(30);
   const [recording, setRecording] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [allocationModalOpen, setAllocationModalOpen] = useState(false);
   const [page, setPage] = useState(1);
   const vehicle = kind === "vehicles";
   const v = data.vehicles.find((v) => v.id === id);
@@ -41,6 +45,59 @@ export function SafetyDetail({
       (vehicle ? t.vehicleId === id : t.driverId === id) &&
       ["assigned", "in_progress"].includes(t.status),
   );
+
+  const handleConfirmAllocation = async (payload: {
+    driverId: string;
+    vehicleId: string;
+    scheme: "pool" | "rto";
+  }) => {
+    setVerifying(true);
+    try {
+      const res = await fetch("/api/fleet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "driver-verify",
+          driverId: payload.driverId,
+          status: "approved",
+          vehicleId: payload.vehicleId,
+          scheme: payload.scheme,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw Error(err.error || "Gagal memproses alokasi armada.");
+      }
+      await refresh();
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleVerify = async (status: "approved" | "rejected") => {
+    if (!d) return;
+    setVerifying(true);
+    try {
+      const res = await fetch("/api/fleet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "driver-verify",
+          driverId: d.id,
+          status,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw Error(err.error || "Gagal memproses verifikasi pengemudi.");
+      }
+      await refresh();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Terjadi kesalahan verifikasi.");
+    } finally {
+      setVerifying(false);
+    }
+  };
   if (!record)
     return (
       <div className="page">
@@ -77,6 +134,38 @@ export function SafetyDetail({
           <Link href={`/dashboard/management/${kind}`}>Kelola data</Link>
         </Button>
       </PageHeading>
+      {!vehicle && d && d.verificationStatus === "pending" && (
+        <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
+              <span className="text-sm font-semibold text-amber-900">Menunggu Verifikasi Dokumen & Akun</span>
+            </div>
+            <p className="text-xs text-amber-700 mt-1">
+              Mitra pengemudi baru mendaftar atau data SIM/armada diperbarui. Konfirmasi persetujuan agar pengemudi dapat dialokasikan rute penugasan logistik.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              size="sm"
+              className="bg-[#2463D8] hover:bg-[#1D4ED8] text-white font-medium shadow-sm"
+              disabled={verifying}
+              onClick={() => setAllocationModalOpen(true)}
+            >
+              ✓ Alokasi & Setujui
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700"
+              disabled={verifying}
+              onClick={() => handleVerify("rejected")}
+            >
+              ✕ Tolak
+            </Button>
+          </div>
+        </div>
+      )}
       <div className="safety-record-summary">
         <div>
           {vehicle ? (
@@ -151,6 +240,13 @@ export function SafetyDetail({
                 ]
               : [
                   ["Nama pengemudi", d!.name],
+                  [
+                    "Email akun pengemudi",
+                    d!.email ||
+                      (d!.id === "d1"
+                        ? "driver@fleetra.id"
+                        : `${d!.name.toLowerCase().replace(/[^a-z0-9]/g, ".")}@fleetra.id`),
+                  ],
                   ["Kontak", d!.phone || "Belum diisi"],
                   [
                     "Kendaraan referensi",
@@ -328,6 +424,15 @@ export function SafetyDetail({
           kind={kind}
           record={record}
           onClose={() => setRecording(false)}
+        />
+      )}
+      {!vehicle && d && (
+        <DriverAllocationModal
+          open={allocationModalOpen}
+          onOpenChange={setAllocationModalOpen}
+          driver={d}
+          vehicles={data.vehicles}
+          onConfirm={handleConfirmAllocation}
         />
       )}
     </div>

@@ -36,13 +36,13 @@ export function Dispatch() {
   });
   const [sort, setSort] = useState("new");
   const trips = data.trips
-    .filter(
-      (t) =>
-        (filter === "all" || t.status === filter) &&
-        `${t.code} ${data.drivers.find((d) => d.id === t.driverId)?.name} ${t.stops.map((s) => s.name).join(" ")}`
-          .toLowerCase()
-          .includes(search.debouncedValue.toLowerCase()),
-    )
+    .filter((t) => {
+      if (filter !== "all" && t.status !== filter) return false;
+      const d = data.drivers.find((d) => d.id === t.driverId);
+      const v = data.vehicles.find((v) => v.id === t.vehicleId);
+      const haystack = `${t.code} ${d?.name || ""} ${d?.email || ""} ${d?.phone || ""} ${v?.plate || ""} ${v?.model || ""} ${t.stops.map((s) => s.name).join(" ")}`.toLowerCase();
+      return haystack.includes(search.debouncedValue.toLowerCase());
+    })
     .toSorted((a, b) =>
       sort === "new"
         ? b.createdAt.localeCompare(a.createdAt)

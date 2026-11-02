@@ -52,8 +52,11 @@ export function MasterEditor({
           }
         : {
             name: d?.name || "",
+            email: d?.email || "",
             phone: d?.phone || "",
-            score: String(d?.score || 0),
+            score: String(d?.score ?? 100),
+            simNumber: d?.simNumber || "",
+            verificationStatus: d?.verificationStatus || "verified",
           },
   );
   const [busy, setBusy] = useState(false);
@@ -65,7 +68,7 @@ export function MasterEditor({
       <Input
         id={`master-${name}`}
         type={type}
-        required={name !== "phone"}
+        required={name !== "phone" && name !== "email"}
         min={type === "number" ? 0 : undefined}
         max={max}
         maxLength={name === "plate" ? 16 : 100}
@@ -208,8 +211,25 @@ export function MasterEditor({
             ) : (
               <>
                 {field("name", "Nama pengemudi")}
+                {field("email", "Email pengemudi (Login Mobile)", "email")}
                 {field("phone", "Nomor telepon")}
+                {field("simNumber", "Nomor lisensi SIM")}
                 {field("score", "Skor keselamatan simulasi", "number", 100)}
+                <div className="form-field">
+                  <Label htmlFor="master-driver-status">Status verifikasi</Label>
+                  <select
+                    id="master-driver-status"
+                    className="w-full h-9 px-3 text-xs rounded-md border border-slate-300 bg-white"
+                    value={values.verificationStatus}
+                    onChange={(e) =>
+                      setValues((s) => ({ ...s, verificationStatus: e.target.value }))
+                    }
+                  >
+                    <option value="verified">Terverifikasi (Siaga)</option>
+                    <option value="pending">Menunggu Verifikasi (Pending)</option>
+                    <option value="rejected">Ditolak</option>
+                  </select>
+                </div>
               </>
             )}
           </div>

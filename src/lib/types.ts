@@ -27,11 +27,14 @@ export interface Driver {
   creationKey?: string;
   id: string;
   name: string;
+  email?: string;
   phone: string;
   score: number;
   trips: number;
   braking: number;
   speeding: number;
+  verificationStatus?: "pending" | "verified" | "rejected";
+  simNumber?: string;
 }
 export interface Stop {
   id: string;
@@ -91,7 +94,7 @@ export interface Notice {
   id: string;
   title: string;
   description: string;
-  kind: "trip" | "health" | "sos";
+  kind: "trip" | "health" | "sos" | "driver";
   href: string;
   at: string;
   status: "unread" | "read" | "acknowledged" | "resolved";

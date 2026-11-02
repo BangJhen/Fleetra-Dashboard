@@ -1,7 +1,7 @@
 import { demoVehicleModels } from "./vehicle-types";
 import { defaultOperatorProfile } from "./operator-profile";
 import { ensureDemoEtle } from "./etle-demo";
-import type { FleetState, Stop, Vehicle } from "./types";
+import type { FleetState, Stop, Vehicle, Driver } from "./types";
 export const defaultWorkspace = { name: "FLEETRA Operations", region: "Bandung Raya" };
 export const locations = [
   {
@@ -143,15 +143,25 @@ export function createSeed(): FleetState {
   const now = new Date();
   const base = new Date(now);
   base.setHours(base.getHours() - 3, 0, 0, 0);
-  const drivers = Array.from({ length: 142 }, (_, i) => ({
-    id: `d${i + 1}`,
-    name: i < 12 ? names[i] : `${names[i % 12]} ${Math.floor(i / 12) + 1}`,
-    phone: "",
-    score: i === 0 ? 94 : 72 + ((i * 7) % 28),
-    trips: 42 + ((i * 13) % 230),
-    braking: i % 5,
-    speeding: i % 3,
-  }));
+  const drivers: Driver[] = Array.from({ length: 142 }, (_, i) => {
+    const rawName = i < 12 ? names[i] : `${names[i % 12]} ${Math.floor(i / 12) + 1}`;
+    const cleanEmail =
+      i === 0
+        ? "driver@fleetra.id"
+        : i === 1
+          ? "ahmad.fauzi@fleetra.id"
+          : `${rawName.toLowerCase().replace(/[^a-z0-9]/g, ".")}@fleetra.id`;
+    return {
+      id: `d${i + 1}`,
+      name: rawName,
+      email: cleanEmail,
+      phone: i === 0 ? "+62 812-3456-7890" : i === 1 ? "+62 812-9876-5432" : "",
+      score: i === 0 ? 94 : 72 + ((i * 7) % 28),
+      trips: 42 + ((i * 13) % 230),
+      braking: i % 5,
+      speeding: i % 3,
+    };
+  });
   const vehicles: Vehicle[] = Array.from({ length: 142 }, (_, i) => {
     const p = locations[i % locations.length];
     return {

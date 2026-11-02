@@ -49,6 +49,106 @@ export async function POST(req: NextRequest) {
       const now = new Date().toISOString();
       if (body.action === "update-profile")
         return updateOperatorProfile(s, body);
+      if (body.action === "driver-verify") {
+        if (!body.driverId || typeof body.driverId !== "string")
+          throw Error("ID pengemudi wajib disertakan.");
+        const driver = s.drivers.find((d) => d.id === body.driverId);
+        if (!driver) throw Error("Pengemudi tidak ditemukan.");
+        const approved = body.status === "approved";
+        driver.verificationStatus = approved ? "verified" : "rejected";
+
+        let allocatedVehicleSummary = "";
+        const scheme = body.scheme === "rto" ? "rto" : "pool";
+
+        if (approved) {
+          if (body.vehicleId) {
+            const vehicle = s.vehicles.find((v) => v.id === body.vehicleId);
+            if (!vehicle) throw Error("Armada yang dipilih tidak ditemukan.");
+
+            if (scheme === "rto") {
+              const allowedRtoTypes = ["motorcycle", "car", "van", "pickup"];
+              if (!allowedRtoTypes.includes(vehicle.type)) {
+                throw Error(
+                  `Kendaraan ${vehicle.model} (${vehicle.type.toUpperCase()}) adalah armada berat. Sesuai kebijakan mitigasi risiko aset FLEETRA, program Sewa-Beli (RTO) berlaku untuk armada mobilitas kurir & niaga ringan (Motor, Mobil MPV, Van, Pick-Up). Armada berat (Truk/Bus) wajib menggunakan skema Armada Pool Perusahaan.`
+                );
+              }
+
+              // Dynamic valuation & tenor by vehicle type
+              const rtoValuation =
+                vehicle.type === "motorcycle"
+                  ? 25000000
+                  : vehicle.type === "car"
+                  ? 135000000
+                  : 180000000;
+              const rtoTenorMonths = vehicle.type === "motorcycle" ? 24 : 36;
+
+              // Create or link RTO contract
+              s.contracts ??= [];
+              let contract = s.contracts.find((c) => c.driverId === driver.id);
+              if (!contract) {
+                contract = {
+                  id: `rto-${driver.id}-${Date.now().toString().slice(-4)}`,
+                  driverId: driver.id,
+                  vehicleId: vehicle.id,
+                  total: rtoValuation,
+                  openingBalance: 0,
+                  months: rtoTenorMonths,
+                  elapsed: 0,
+                };
+                s.contracts.push(contract);
+              } else {
+                contract.vehicleId = vehicle.id;
+                contract.total = rtoValuation;
+                contract.months = rtoTenorMonths;
+              }
+            }
+
+            // Assign vehicle to this driver
+            for (const otherV of s.vehicles) {
+              if (otherV.driverId === driver.id && otherV.id !== vehicle.id) {
+                otherV.driverId = "";
+              }
+            }
+            vehicle.driverId = driver.id;
+            vehicle.status = "idle";
+            allocatedVehicleSummary = `${vehicle.model} (${vehicle.plate})`;
+          }
+        } else {
+          // If rejected, unlink any vehicle
+          for (const v of s.vehicles) {
+            if (v.driverId === driver.id) {
+              v.driverId = "";
+            }
+          }
+        }
+
+        s.notices.unshift({
+          id: `verified-${driver.id}-${Date.now()}`,
+          title: approved
+            ? `Mitra Diverifikasi: ${driver.name}`
+            : `Pendaftaran Ditolak: ${driver.name}`,
+          description: approved
+            ? `Mitra ${driver.name} disetujui.${
+                allocatedVehicleSummary
+                  ? ` Alokasi armada: ${allocatedVehicleSummary} [Skema: ${
+                      scheme === "rto" ? "Kemitraan Sewa-Beli RTO" : "Armada Pool Perusahaan"
+                    }].`
+                  : ""
+              }`
+            : `Pendaftaran mitra ${driver.name} ditolak oleh operator logistik.`,
+          kind: "driver",
+          href: `/dashboard/safety/driver/${driver.id}`,
+          at: new Date().toISOString(),
+          status: "unread",
+        });
+
+        return {
+          id: driver.id,
+          verificationStatus: driver.verificationStatus,
+          vehicleId: body.vehicleId || null,
+          scheme,
+        };
+      }
       if (body.action === "safety-record") return recordSafety(s, body);
       if (
         ["master-save", "master-archive", "master-restore"].includes(

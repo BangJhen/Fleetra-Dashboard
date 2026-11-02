@@ -15,6 +15,8 @@ export function availableResources(s: FleetState) {
       (d) =>
         !d.archivedAt &&
         d.score > 85 &&
+        d.verificationStatus !== "pending" &&
+        d.verificationStatus !== "rejected" &&
         !active.some((t) => t.driverId === d.id),
     ),
   };

@@ -18,9 +18,12 @@ import { useFleet } from "./provider";
 import { PageHeading, Status, Initials, EmptyState, PaginationControls } from "./common";
 import { Icon } from "./icons";
 import { useDebouncedSearch } from "./use-debounced-search";
+import { DriverAllocationModal } from "./driver-allocation-modal";
+import type { Driver } from "@/lib/types";
 export function Safety() {
   const params = useSearchParams();
   const stored = useFleet((s) => s.data);
+  const refresh = useFleet((s) => s.refresh);
   const data = {
     ...stored,
     vehicles: stored.vehicles.filter((v) => !v.archivedAt),
@@ -32,6 +35,66 @@ export function Safety() {
     onSearch: () => setPage(1),
   });
   const [onlyRisk, setOnlyRisk] = useState(true);
+  const [driverFilter, setDriverFilter] = useState<"all" | "pending">("all");
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
+  const [allocationDriver, setAllocationDriver] = useState<Driver | null>(null);
+
+  const handleOpenAllocation = (d: Driver) => {
+    setAllocationDriver(d);
+  };
+
+  const handleConfirmAllocation = async (payload: {
+    driverId: string;
+    vehicleId: string;
+    scheme: "pool" | "rto";
+  }) => {
+    setVerifyingId(payload.driverId);
+    try {
+      const res = await fetch("/api/fleet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "driver-verify",
+          driverId: payload.driverId,
+          status: "approved",
+          vehicleId: payload.vehicleId,
+          scheme: payload.scheme,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw Error(err.error || "Gagal memproses alokasi armada.");
+      }
+      await refresh();
+    } finally {
+      setVerifyingId(null);
+    }
+  };
+
+  const handleVerify = async (driverId: string, status: "approved" | "rejected") => {
+    setVerifyingId(driverId);
+    try {
+      const res = await fetch("/api/fleet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "driver-verify",
+          driverId,
+          status,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw Error(err.error || "Gagal memproses verifikasi pengemudi.");
+      }
+      await refresh();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Terjadi kesalahan sistem.");
+    } finally {
+      setVerifyingId(null);
+    }
+  };
+
   const pageSize = 8;
   const average =
     data.vehicles.reduce((n, v) => n + v.health, 0) /
@@ -41,9 +104,37 @@ export function Safety() {
       (!onlyRisk || v.status === "service") &&
       v.plate.toLowerCase().includes(search.debouncedValue.toLowerCase()),
   );
+  const pendingDrivers = data.drivers.filter(
+    (d) => d.verificationStatus === "pending"
+  );
   const drivers = data.drivers
-    .filter((d) => d.name.toLowerCase().includes(search.debouncedValue.toLowerCase()))
-    .toSorted((a, b) => b.score - a.score);
+    .filter((d) => {
+      if (driverFilter === "pending") {
+        return d.verificationStatus === "pending";
+      }
+      return true;
+    })
+    .filter((d) => {
+      const q = search.debouncedValue.toLowerCase().trim();
+      if (!q) return true;
+      const refVehicle = data.vehicles.find((v) => v.driverId === d.id && !v.archivedAt);
+      const email = (d.email || `${d.name.toLowerCase().replace(/[^a-z0-9]/g, ".")}@fleetra.id`).toLowerCase();
+      const phone = (d.phone || "").toLowerCase();
+      const plate = (refVehicle?.plate || "").toLowerCase();
+      const model = (refVehicle?.model || "").toLowerCase();
+      return (
+        d.name.toLowerCase().includes(q) ||
+        email.includes(q) ||
+        phone.includes(q) ||
+        plate.includes(q) ||
+        model.includes(q)
+      );
+    })
+    .toSorted((a, b) => {
+      if (a.verificationStatus === "pending" && b.verificationStatus !== "pending") return -1;
+      if (b.verificationStatus === "pending" && a.verificationStatus !== "pending") return 1;
+      return b.score - a.score;
+    });
   const vehiclePage = Math.min(page, Math.max(1, Math.ceil(vehicles.length / pageSize)));
   const driverPage = Math.min(page, Math.max(1, Math.ceil(drivers.length / pageSize)));
   return (
@@ -154,19 +245,63 @@ export function Safety() {
           <div className="safety-overview-summary">
             <span>Rata rata safety score</span>
             <strong>{(data.drivers.reduce((n, d) => n + d.score, 0) / Math.max(1, data.drivers.length)).toFixed(1)}<small>dari 100</small></strong>
-            <span className="muted">{data.drivers.length} pengemudi aktif</span>
+            <span className="muted">{data.drivers.length} pengemudi terdaftar</span>
           </div>
+
+          {pendingDrivers.length > 0 && (
+            <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50/70 p-4 shadow-xs">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-white font-bold text-sm">
+                    !
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-amber-950 text-sm">
+                      {pendingDrivers.length} Pengemudi Menunggu Verifikasi Dokumen & Armada (KYD)
+                    </h3>
+                    <p className="text-amber-800 text-xs mt-0.5 leading-relaxed">
+                      Pengemudi yang baru mendaftar melalui aplikasi mobile memerlukan persetujuan lisensi SIM dan armada sebelum dapat menerima tugas pengantaran logistik.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  variant={driverFilter === "pending" ? "default" : "outline"}
+                  className={
+                    driverFilter === "pending"
+                      ? "bg-amber-600 hover:bg-amber-700 text-white shrink-0 font-medium text-xs"
+                      : "border-amber-300 text-amber-900 bg-white hover:bg-amber-100 shrink-0 font-medium text-xs"
+                  }
+                  onClick={() => {
+                    setDriverFilter((f) => (f === "pending" ? "all" : "pending"));
+                    setPage(1);
+                  }}
+                >
+                  {driverFilter === "pending" ? "Tampilkan Semua Driver" : `Tinjau Antrean (${pendingDrivers.length})`}
+                </Button>
+              </div>
+            </div>
+          )}
+
           <SafetyPanels data={data} kind="drivers" />
           <section className="content-panel safety-working-list">
             <div className="table-toolbar">
               <div>
-                <h2>Peringkat keselamatan pengemudi</h2>
-                <p className="muted">Diurutkan berdasarkan skor tertinggi.</p>
+                <h2>
+                  {driverFilter === "pending"
+                    ? "Antrean Verifikasi Pengemudi Baru"
+                    : "Peringkat keselamatan pengemudi"}
+                </h2>
+                <p className="muted">
+                  {driverFilter === "pending"
+                    ? "Tinjau kelengkapan lisensi SIM dan armada sebelum menyetujui."
+                    : "Diurutkan berdasarkan skor tertinggi."}
+                </p>
               </div>
               <Input
                 className="compact-input"
                 aria-label="Cari pengemudi"
-                placeholder="Cari nama pengemudi"
+                placeholder="Cari nama, email, kontak, atau armada..."
                 value={search.value}
                 onChange={search.onChange}
                 onKeyDown={search.onKeyDown}
@@ -177,52 +312,111 @@ export function Safety() {
                 <TableRow>
                   <TableHead>Peringkat</TableHead>
                   <TableHead>Pengemudi</TableHead>
+                  <TableHead>Armada referensi</TableHead>
                   <TableHead>Perjalanan</TableHead>
                   <TableHead>Pengereman keras</TableHead>
                   <TableHead>Melebihi kecepatan</TableHead>
-                  <TableHead>Safety score</TableHead>
-                  <TableHead />
+                  <TableHead>Status / Skor</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {drivers.slice((driverPage - 1) * pageSize, driverPage * pageSize).map((d, i) => (
-                  <TableRow key={d.id}>
-                    <TableCell>
-                      <span className="rank">{(driverPage - 1) * pageSize + i + 1}</span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="person-cell">
-                        <Initials name={d.name} />
-                        <strong>{d.name}</strong>
-                      </div>
-                    </TableCell>
-                    <TableCell>{d.trips}</TableCell>
-                    <TableCell>{d.braking} kejadian</TableCell>
-                    <TableCell>{d.speeding} kejadian</TableCell>
-                    <TableCell>
-                      <strong className={d.score > 85 ? "good-score" : "muted"}>
-                        {d.score}
-                      </strong>
-                      <span className="muted"> dari 100</span>
-                    </TableCell>
-                    <TableCell>
-                      <Button asChild variant="ghost" size="icon">
-                        <Link
-                          aria-label={`Detail ${d.name}`}
-                          href={`/dashboard/safety/drivers/${d.id}`}
-                        >
-                          <Icon name="chevron" />
-                        </Link>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {drivers.slice((driverPage - 1) * pageSize, driverPage * pageSize).map((d, i) => {
+                  const refVehicle = data.vehicles.find((v) => v.driverId === d.id && !v.archivedAt);
+                  const driverEmail = d.email || `${d.name.toLowerCase().replace(/[^a-z0-9]/g, ".")}@fleetra.id`;
+                  const isPending = d.verificationStatus === "pending";
+                  return (
+                    <TableRow key={d.id} className={isPending ? "bg-amber-50/40" : undefined}>
+                      <TableCell>
+                        <span className="rank">{(driverPage - 1) * pageSize + i + 1}</span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="person-cell">
+                          <Initials name={d.name} />
+                          <div className="flex flex-col text-left">
+                            <div className="flex items-center gap-1.5">
+                              <strong>{d.name}</strong>
+                              {isPending && (
+                                <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+                                  Menunggu Approval
+                                </span>
+                              )}
+                            </div>
+                            <small className="table-secondary">{driverEmail} {d.phone ? `· ${d.phone}` : ""}</small>
+                            {d.simNumber ? (
+                              <small className="text-[11px] text-slate-500 font-mono">SIM: {d.simNumber}</small>
+                            ) : null}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {refVehicle ? (
+                          <div className="text-left">
+                            <strong>{refVehicle.plate}</strong>
+                            <small className="table-secondary block">{refVehicle.model}</small>
+                          </div>
+                        ) : (
+                          <span className="muted text-xs">Belum dialokasikan</span>
+                        )}
+                      </TableCell>
+                      <TableCell>{d.trips}</TableCell>
+                      <TableCell>{d.braking} kejadian</TableCell>
+                      <TableCell>{d.speeding} kejadian</TableCell>
+                      <TableCell>
+                        {isPending ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                            Verifikasi
+                          </span>
+                        ) : (
+                          <>
+                            <strong className={d.score > 85 ? "good-score" : "muted"}>
+                              {d.score}
+                            </strong>
+                            <span className="muted"> dari 100</span>
+                          </>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {isPending ? (
+                          <div className="flex items-center justify-end gap-1.5">
+                            <Button
+                              size="sm"
+                              className="h-7 px-2.5 bg-[#2463D8] hover:bg-[#1D4ED8] text-white text-xs font-semibold gap-1"
+                              onClick={() => handleOpenAllocation(d)}
+                              disabled={verifyingId === d.id}
+                            >
+                              {verifyingId === d.id ? "..." : "✓ Alokasi & Setujui"}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 px-2 border-red-200 text-red-600 hover:bg-red-50 text-xs"
+                              onClick={() => handleVerify(d.id, "rejected")}
+                              disabled={verifyingId === d.id}
+                            >
+                              ✕
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button asChild variant="ghost" size="icon">
+                            <Link
+                              aria-label={`Detail ${d.name}`}
+                              href={`/dashboard/safety/drivers/${d.id}`}
+                            >
+                              <Icon name="chevron" />
+                            </Link>
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
             {drivers.length === 0 && (
               <EmptyState
                 title="Pengemudi tidak ditemukan"
-                description="Coba nama pengemudi lain."
+                description="Coba kata kunci nama, email akun, kontak, atau armada referensi lain."
               />
             )}
             <SafetyListPagination count={drivers.length} page={page} pageSize={pageSize} onPage={setPage} />
@@ -230,6 +424,14 @@ export function Safety() {
           <RecentSafetyHistory data={data} kind="drivers" />
         </TabsContent>
       </Tabs>
+
+      <DriverAllocationModal
+        open={!!allocationDriver}
+        onOpenChange={(open) => !open && setAllocationDriver(null)}
+        driver={allocationDriver}
+        vehicles={data.vehicles}
+        onConfirm={handleConfirmAllocation}
+      />
     </div>
   );
 }
