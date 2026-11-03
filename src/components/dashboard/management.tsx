@@ -3,6 +3,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Tooltip } from "@/components/ui/tooltip";
+import { Eye, Pencil, Archive, RotateCcw } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   Table,
   TableBody,
@@ -199,27 +202,58 @@ export function Management({ kind }: { kind: "vehicles" | "drivers" }) {
                       <TableCell>
                         <div className="master-row-actions">
                           {!v.archivedAt && (
+                            <Tooltip content="Ubah">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-7 w-7 text-slate-600 hover:text-blue-600 hover:bg-slate-50 cursor-pointer"
+                                onClick={() => setEditor(v)}
+                                aria-label="Ubah"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                                <span className="sr-only">Ubah</span>
+                              </Button>
+                            </Tooltip>
+                          )}
+                          <Tooltip content={v.archivedAt ? "Pulihkan" : "Arsipkan"}>
                             <Button
                               variant="outline"
-                              size="sm"
-                              onClick={() => setEditor(v)}
+                              size="icon"
+                              className={cn(
+                                "h-7 w-7 cursor-pointer",
+                                v.archivedAt
+                                   ? "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                  : "text-slate-600 hover:text-amber-600 hover:bg-amber-50",
+                              )}
+                              onClick={() => setArchive(v)}
+                              aria-label={v.archivedAt ? "Pulihkan" : "Arsipkan"}
                             >
-                              Ubah
+                              {v.archivedAt ? (
+                                <RotateCcw className="h-3.5 w-3.5" />
+                              ) : (
+                                <Archive className="h-3.5 w-3.5" />
+                              )}
+                              <span className="sr-only">
+                                {v.archivedAt ? "Pulihkan" : "Arsipkan"}
+                              </span>
                             </Button>
-                          )}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setArchive(v)}
-                          >
-                            {v.archivedAt ? "Pulihkan" : "Arsipkan"}
-                          </Button>
-                          <Button asChild variant="ghost">
-                            <Link href={`/dashboard/safety/vehicles/${v.id}`}>
-                              Lihat kondisi
-                              <Icon name="chevron" />
-                            </Link>
-                          </Button>
+                          </Tooltip>
+                          <Tooltip content="Lihat kondisi">
+                            <Button
+                              asChild
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+                            >
+                              <Link
+                                href={`/dashboard/safety/vehicles/${v.id}`}
+                                aria-label={`Lihat kondisi ${v.plate}`}
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                                <span className="sr-only">Lihat kondisi</span>
+                              </Link>
+                            </Button>
+                          </Tooltip>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -325,28 +359,54 @@ export function Management({ kind }: { kind: "vehicles" | "drivers" }) {
                               )
                             )}
                             {!d.archivedAt && (
+                              <Tooltip content="Ubah">
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-7 w-7 text-slate-600 hover:text-blue-600 hover:bg-slate-50 cursor-pointer"
+                                  onClick={() => setEditor(d)}
+                                  aria-label="Ubah"
+                                >
+                                  <Pencil className="h-3.5 w-3.5" />
+                                  <span className="sr-only">Ubah</span>
+                                </Button>
+                              </Tooltip>
+                            )}
+                            <Tooltip content={d.archivedAt ? "Pulihkan" : "Arsipkan"}>
                               <Button
                                 variant="outline"
-                                size="sm"
-                                className="h-7 text-xs px-2"
-                                onClick={() => setEditor(d)}
+                                size="icon"
+                                className={cn(
+                                  "h-7 w-7 cursor-pointer",
+                                  d.archivedAt
+                                    ? "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                    : "text-slate-600 hover:text-amber-600 hover:bg-amber-50",
+                                )}
+                                onClick={() => setArchive(d)}
+                                aria-label={d.archivedAt ? "Pulihkan" : "Arsipkan"}
                               >
-                                Ubah
+                                {d.archivedAt ? (
+                                  <RotateCcw className="h-3.5 w-3.5" />
+                                ) : (
+                                  <Archive className="h-3.5 w-3.5" />
+                                )}
+                                <span className="sr-only">
+                                  {d.archivedAt ? "Pulihkan" : "Arsipkan"}
+                                </span>
                               </Button>
-                            )}
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-7 text-xs px-2"
-                              onClick={() => setArchive(d)}
-                            >
-                              {d.archivedAt ? "Pulihkan" : "Arsipkan"}
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                              <Link href={`/dashboard/safety/drivers/${d.id}`} aria-label={`Detail ${d.name}`}>
-                                <Icon name="chevron" />
-                              </Link>
-                            </Button>
+                            </Tooltip>
+                            <Tooltip content={`Lihat detail ${d.name}`}>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+                                asChild
+                              >
+                                <Link href={`/dashboard/safety/drivers/${d.id}`} aria-label={`Detail ${d.name}`}>
+                                  <Eye className="h-3.5 w-3.5" />
+                                </Link>
+                              </Button>
+                            </Tooltip>
                           </div>
                         </TableCell>
                       </TableRow>

@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { DashboardOverview } from "@/components/dashboard/overview";
 import { Tracking } from "@/components/dashboard/tracking";
 import { Dispatch } from "@/components/dashboard/dispatch";
 import { Planner } from "@/components/dashboard/planner";
@@ -16,7 +17,8 @@ export default async function Page({
 }) {
   const { path = [] } = await params;
   const [first, second, third] = path;
-  if (path.length === 0) return <Tracking />;
+  if (path.length === 0) return <DashboardOverview />;
+  if (first === "tracking" && path.length === 1) return <Tracking />;
   if (first === "dispatch") {
     if (path.length === 1) return <Dispatch />;
     if (path.length === 2)

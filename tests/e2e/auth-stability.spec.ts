@@ -11,9 +11,9 @@ test("login navigates once and the new session survives a page reload", async ({
   await page.goto("/login");
   await page.getByRole("button", { name: "Buka dashboard demo" }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByRole("heading", { name: "Live tracking", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Dashboard", exact: false })).toBeVisible();
   await page.reload();
-  await expect(page.getByRole("heading", { name: "Live tracking", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Dashboard", exact: false })).toBeVisible();
   await page.waitForTimeout(1200);
   expect(loginDocuments).toBeLessThanOrEqual(2);
 });

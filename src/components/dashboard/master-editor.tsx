@@ -68,7 +68,7 @@ export function MasterEditor({
       <Input
         id={`master-${name}`}
         type={type}
-        required={name !== "phone" && name !== "email"}
+        required={name !== "phone" && name !== "email" && name !== "simNumber"}
         min={type === "number" ? 0 : undefined}
         max={max}
         maxLength={name === "plate" ? 16 : 100}

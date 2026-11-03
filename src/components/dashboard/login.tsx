@@ -7,8 +7,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Mail, Lock, User } from "lucide-react";
 import { Brand } from "./shell";
 import { Icon } from "./icons";
+import { LoginHero3D } from "./login-hero-3d";
 export function LoginForm({ mode = "login" }: { mode?: "login" | "register" }) {
   const registering = mode === "register";
   const [name, setName] = useState("");
@@ -51,46 +53,72 @@ export function LoginForm({ mode = "login" }: { mode?: "login" | "register" }) {
       className={registering ? "login-page register-page" : "login-page"}
       id="main-content"
     >
+      {/* Ambient animated 3D atmosphere */}
+      <div className="login-bg-glows" aria-hidden="true">
+        <div className="login-glow-orb orb-primary" />
+        <div className="login-glow-orb orb-cyan" />
+        <div className="login-glow-orb orb-indigo" />
+        <div className="login-grid-mesh" />
+
+        {/* Floating 3D Isometric Tech Cubes & Particles (top-right background) */}
+        <div className="login-tech-cubes">
+          <svg viewBox="0 0 280 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="cubeTop1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#bae6fd" />
+                <stop offset="100%" stopColor="#7dd3fc" />
+              </linearGradient>
+              <linearGradient id="cubeLeft1" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#0284c7" />
+                <stop offset="100%" stopColor="#0369a1" />
+              </linearGradient>
+              <linearGradient id="cubeRight1" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#2563eb" />
+                <stop offset="100%" stopColor="#1d4ed8" />
+              </linearGradient>
+              <linearGradient id="cubeWire" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.85" />
+                <stop offset="100%" stopColor="#2563eb" stopOpacity="0.4" />
+              </linearGradient>
+            </defs>
+            {/* Wireframe Cube */}
+            <g transform="translate(180, 75) scale(0.95)" stroke="url(#cubeWire)" strokeWidth="1.5" fill="none" opacity="0.85">
+              <polygon points="40,10 75,30 40,50 5,30" />
+              <line x1="5" y1="30" x2="5" y2="70" />
+              <line x1="75" y1="30" x2="75" y2="70" />
+              <line x1="40" y1="50" x2="40" y2="90" />
+              <polygon points="40,90 75,70 40,50 5,70" />
+            </g>
+            {/* Solid Isometric Cube 1 */}
+            <g transform="translate(90, 25) scale(0.7)">
+              <polygon points="30,5 55,20 30,35 5,20" fill="url(#cubeTop1)" />
+              <polygon points="5,20 30,35 30,65 5,50" fill="url(#cubeLeft1)" />
+              <polygon points="30,35 55,20 55,50 30,65" fill="url(#cubeRight1)" />
+            </g>
+            {/* Solid Isometric Cube 2 */}
+            <g transform="translate(200, 170) scale(0.48)">
+              <polygon points="30,5 55,20 30,35 5,20" fill="url(#cubeTop1)" />
+              <polygon points="5,20 30,35 30,65 5,50" fill="url(#cubeLeft1)" />
+              <polygon points="30,35 55,20 55,50 30,65" fill="url(#cubeRight1)" />
+            </g>
+            {/* Floating Diamond Particles */}
+            <polygon points="65,95 71,101 65,107 59,101" fill="#38bdf8" opacity="0.85" />
+            <polygon points="145,45 150,50 145,55 140,50" fill="#0284c7" opacity="0.75" />
+            <polygon points="240,95 246,101 240,107 234,101" fill="#60a5fa" opacity="0.9" />
+            <polygon points="225,35 230,40 225,45 220,40" fill="#0284c7" opacity="0.65" />
+            <polygon points="125,120 129,124 125,128 121,124" fill="#38bdf8" opacity="0.8" />
+            <polygon points="255,145 260,150 255,155 250,150" fill="#2563eb" opacity="0.75" />
+            <polygon points="180,25 183,28 180,31 177,28" fill="#38bdf8" opacity="0.65" />
+            <polygon points="95,145 99,149 95,153 91,149" fill="#0284c7" opacity="0.55" />
+          </svg>
+        </div>
+      </div>
       <div className="login-brand">
         <Brand />
         <span>Fleet operations workspace</span>
       </div>
       <div className="login-content">
-        <div className="login-intro">
-          <span className="login-kicker">
-            {registering
-              ? "Workspace untuk tim operasional"
-              : "Kendali yang lebih terarah"}
-          </span>
-          <h1>
-            {registering ? (
-              <>
-                Mulai bersama.
-                <br /> Bergerak terarah.
-              </>
-            ) : (
-              <>
-                Seluruh armada.
-                <br /> Satu pandangan.
-              </>
-            )}
-          </h1>
-          <p>
-            Dari penugasan pertama hingga pengantaran terakhir. Kelola
-            perjalanan, keselamatan, dan pertumbuhan mitra dari satu pusat
-            kendali.
-          </p>
-          <div className="auth-illustration">
-            <Image
-              src="/images/fleetra-auth-illustration.png"
-              alt="Ilustrasi armada pengiriman FLEETRA di kawasan gudang dan perkotaan"
-              width={1536}
-              height={1024}
-              sizes="(max-width: 560px) 350px, (max-width: 900px) 520px, 560px"
-              priority
-            />
-          </div>
-        </div>
+        <LoginHero3D registering={registering} />
         <section className="login-form">
           <h2>{registering ? "Buat akun FLEETRA" : "Masuk ke workspace"}</h2>
           <p>
@@ -107,43 +135,55 @@ export function LoginForm({ mode = "login" }: { mode?: "login" | "register" }) {
             {registering && (
               <div className="form-field">
                 <Label htmlFor="register-name">Nama lengkap</Label>
-                <Input
-                  id="register-name"
-                  autoComplete="name"
-                  required
-                  maxLength={80}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Nama lengkap Anda"
-                  disabled={loading}
-                />
+                <div className="form-input-wrap">
+                  <Input
+                    id="register-name"
+                    autoComplete="name"
+                    required
+                    maxLength={80}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Nama lengkap Anda"
+                    disabled={loading}
+                    className="input-with-icon"
+                  />
+                  <User className="field-adornment-icon" aria-hidden="true" />
+                </div>
               </div>
             )}
             <div className="form-field">
               <Label htmlFor="email">Email operator</Label>
-              <Input
-                autoComplete="username"
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="nama@perusahaan.com"
-              />
+              <div className="form-input-wrap">
+                <Input
+                  autoComplete="username"
+                  id="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="nama@perusahaan.com"
+                  className="input-with-icon"
+                />
+                <Mail className="field-adornment-icon" aria-hidden="true" />
+              </div>
             </div>
             <div className="form-field">
               <Label htmlFor="password">Kata sandi</Label>
-              <Input
-                autoComplete={registering ? "new-password" : "current-password"}
-                minLength={registering ? 12 : undefined}
-                maxLength={128}
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Masukkan kata sandi"
-              />
+              <div className="form-input-wrap">
+                <Input
+                  autoComplete={registering ? "new-password" : "current-password"}
+                  minLength={registering ? 12 : undefined}
+                  maxLength={128}
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Masukkan kata sandi"
+                  className="input-with-icon"
+                />
+                <Lock className="field-adornment-icon" aria-hidden="true" />
+              </div>
             </div>
             {registering && (
               <>
@@ -154,21 +194,25 @@ export function LoginForm({ mode = "login" }: { mode?: "login" | "register" }) {
                   <Label htmlFor="confirm-password">
                     Konfirmasi kata sandi
                   </Label>
-                  <Input
-                    id="confirm-password"
-                    type="password"
-                    autoComplete="new-password"
-                    minLength={12}
-                    maxLength={128}
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => {
-                      setConfirmPassword(e.target.value);
-                      setError("");
-                    }}
-                    disabled={loading}
-                    placeholder="Ulangi kata sandi"
-                  />
+                  <div className="form-input-wrap">
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      autoComplete="new-password"
+                      minLength={12}
+                      maxLength={128}
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => {
+                        setConfirmPassword(e.target.value);
+                        setError("");
+                      }}
+                      disabled={loading}
+                      placeholder="Ulangi kata sandi"
+                      className="input-with-icon"
+                    />
+                    <Lock className="field-adornment-icon" aria-hidden="true" />
+                  </div>
                 </div>
               </>
             )}
@@ -189,7 +233,7 @@ export function LoginForm({ mode = "login" }: { mode?: "login" | "register" }) {
             </Button>
           </form>
           <p className="auth-switch">
-            {registering ? "Sudah punya akun" : "Belum punya akun"}
+            {registering ? "Sudah punya akun? " : "Belum punya akun? "}
             <Link href={registering ? "/login" : "/register"}>
               {registering ? "Masuk sekarang" : "Daftar sekarang"}
             </Link>

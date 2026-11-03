@@ -17,6 +17,28 @@ import { TrendChart, BarChart } from "./safety-charts";
 import { HistoryTable, snapshotSource } from "./safety-panels";
 import { SafetyRecord } from "./safety-record";
 import { DriverAllocationModal } from "./driver-allocation-modal";
+import {
+  ShieldCheck,
+  Disc,
+  Fuel,
+  Gauge,
+  Sliders,
+  Car,
+  User,
+  MapPin,
+  Compass,
+  TrendingUp,
+  Clock,
+  Wrench,
+  AlertTriangle,
+  Route,
+  Activity,
+  Mail,
+  Phone,
+  FileText,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+
 export function SafetyDetail({
   kind,
   id,
@@ -192,76 +214,140 @@ export function SafetyDetail({
       <section className="detail-facts content-panel">
         {(vehicle
           ? [
-              ["Indeks kondisi", `${v!.health} dari 100`],
-              ["Estimasi kampas rem", `${v!.brake} persen`],
-              ["Bahan bakar", `${v!.fuel} persen`],
-              ["Odometer", `${v!.odometer.toLocaleString("id-ID")} km`],
+              {
+                label: "Indeks kondisi",
+                value: `${v!.health} dari 100`,
+                icon: ShieldCheck,
+                color: "text-blue-600",
+                bg: "bg-blue-50 border-blue-100",
+              },
+              {
+                label: "Estimasi kampas rem",
+                value: `${v!.brake} persen`,
+                icon: Disc,
+                color: "text-cyan-600",
+                bg: "bg-cyan-50 border-cyan-100",
+              },
+              {
+                label: "Bahan bakar",
+                value: `${v!.fuel} persen`,
+                icon: Fuel,
+                color: "text-indigo-600",
+                bg: "bg-indigo-50 border-indigo-100",
+              },
+              {
+                label: "Odometer",
+                value: `${v!.odometer.toLocaleString("id-ID")} km`,
+                icon: Gauge,
+                color: "text-emerald-600",
+                bg: "bg-emerald-50 border-emerald-100",
+              },
             ]
           : [
-              ["Skor keselamatan", `${d!.score} dari 100`],
-              ["Total perjalanan", String(d!.trips)],
-              ["Pengereman keras", `${d!.braking} kejadian`],
-              ["Melebihi kecepatan", `${d!.speeding} kejadian`],
+              {
+                label: "Skor keselamatan",
+                value: `${d!.score} dari 100`,
+                icon: ShieldCheck,
+                color: "text-blue-600",
+                bg: "bg-blue-50 border-blue-100",
+              },
+              {
+                label: "Total perjalanan",
+                value: String(d!.trips),
+                icon: Route,
+                color: "text-indigo-600",
+                bg: "bg-indigo-50 border-indigo-100",
+              },
+              {
+                label: "Pengereman keras",
+                value: `${d!.braking} kejadian`,
+                icon: AlertTriangle,
+                color: "text-amber-600",
+                bg: "bg-amber-50 border-amber-100",
+              },
+              {
+                label: "Melebihi kecepatan",
+                value: `${d!.speeding} kejadian`,
+                icon: Gauge,
+                color: "text-rose-600",
+                bg: "bg-rose-50 border-rose-100",
+              },
             ]
-        ).map(([label, value]) => (
-          <div key={label}>
-            <span>{label}</span>
-            <strong>{value}</strong>
+        ).map(({ label, value, icon: IconComponent, color, bg }) => (
+          <div key={label} className="detail-fact-card">
+            <div className="fact-header">
+              <span className="fact-label">{label}</span>
+              <div className={cn("fact-icon-box border", bg, color)}>
+                <IconComponent className="h-4 w-4" />
+              </div>
+            </div>
+            <strong className="fact-value">{value}</strong>
           </div>
         ))}
       </section>
       <section className="content-panel safety-technical">
         <div className="section-heading">
-          <div>
-            <h2>
-              {vehicle
-                ? "Informasi teknis kendaraan"
-                : "Informasi teknis keselamatan"}
-            </h2>
-            <p>Parameter yang tersedia beserta sumber dan batas pembacaannya</p>
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+              <Wrench className="h-4.5 w-4.5" />
+            </div>
+            <div>
+              <h2>
+                {vehicle
+                  ? "Informasi teknis kendaraan"
+                  : "Informasi teknis keselamatan"}
+              </h2>
+              <p>Parameter yang tersedia beserta sumber dan batas pembacaannya</p>
+            </div>
           </div>
         </div>
         <div className="safety-technical-grid">
           <dl className="review-details">
             {(vehicle
               ? [
-                  ["Identitas kendaraan", v!.plate],
-                  ["Model armada", v!.model],
+                  ["Identitas kendaraan", v!.plate, Car],
+                  ["Model armada", v!.model, Sliders],
                   [
                     "Pengemudi referensi",
                     data.drivers.find((d) => d.id === v!.driverId)?.name ||
                       "Belum dialokasikan",
+                    User,
                   ],
-                  ["Kecepatan snapshot", `${v!.speed} km per jam`],
-                  ["Arah kendaraan", `${v!.heading} derajat`],
-                  ["Lokasi simulasi", v!.location],
-                  ["Koordinat lintang", v!.lat.toFixed(5)],
-                  ["Koordinat bujur", v!.lng.toFixed(5)],
+                  ["Kecepatan snapshot", `${v!.speed} km per jam`, Gauge],
+                  ["Arah kendaraan", `${v!.heading} derajat`, Compass],
+                  ["Lokasi simulasi", v!.location, MapPin],
+                  ["Koordinat lintang", v!.lat.toFixed(5), MapPin],
+                  ["Koordinat bujur", v!.lng.toFixed(5), MapPin],
                 ]
               : [
-                  ["Nama pengemudi", d!.name],
+                  ["Nama pengemudi", d!.name, User],
                   [
                     "Email akun pengemudi",
                     d!.email ||
                       (d!.id === "d1"
                         ? "driver@fleetra.id"
                         : `${d!.name.toLowerCase().replace(/[^a-z0-9]/g, ".")}@fleetra.id`),
+                    Mail,
                   ],
-                  ["Kontak", d!.phone || "Belum diisi"],
+                  ["Kontak", d!.phone || "Belum diisi", Phone],
                   [
                     "Kendaraan referensi",
                     data.vehicles.find(
                       (v) => v.driverId === id && !v.archivedAt,
                     )?.plate || "Belum dialokasikan",
+                    Car,
                   ],
-                  ["Syarat skor penugasan", "Lebih dari 85"],
-                  ["Cakupan kejadian", "Jumlah kumulatif snapshot"],
-                  ["Sumber evaluasi", "Input simulasi tersimpan"],
+                  ["Syarat skor penugasan", "Lebih dari 85", ShieldCheck],
+                  ["Cakupan kejadian", "Jumlah kumulatif snapshot", Activity],
+                  ["Sumber evaluasi", "Input simulasi tersimpan", FileText],
                 ]
-            ).map(([l, value]) => (
-              <div key={l}>
-                <dt>{l}</dt>
-                <dd>{value}</dd>
+            ).map(([l, value, IconComponent]) => (
+              <div key={l as string} className="review-detail-row">
+                <dt className="flex items-center gap-2">
+                  <IconComponent className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                  <span>{l as string}</span>
+                </dt>
+                <dd>{value as string}</dd>
               </div>
             ))}
           </dl>
@@ -312,9 +398,14 @@ export function SafetyDetail({
         </div>
       </section>
       <div className="safety-history-controls">
-        <div>
-          <h2>Tren dan riwayat kondisi</h2>
-          <p>Data mulai dikumpulkan sejak pencatatan diaktifkan</p>
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+            <TrendingUp className="h-4.5 w-4.5" />
+          </div>
+          <div>
+            <h2>Tren dan riwayat kondisi</h2>
+            <p>Data mulai dikumpulkan sejak pencatatan diaktifkan</p>
+          </div>
         </div>
         <div className="inline-controls">
           <label htmlFor="history-period">Rentang waktu</label>

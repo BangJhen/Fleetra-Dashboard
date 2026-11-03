@@ -2,13 +2,12 @@ import { test, expect } from "@playwright/test";
 test.beforeEach(async ({ page }) => {
   await page.goto("/login");
   await page.getByRole("button", { name: "Buka dashboard demo" }).click();
-  await expect(
-    page.getByRole("heading", { name: "Live tracking", exact: true }),
-  ).toBeVisible();
+  await expect(page).toHaveURL(/\/dashboard$/);
 });
 test("fleet search, filter and inspector share the same vehicle data", async ({
   page,
 }) => {
+  await page.goto("/dashboard/tracking");
   await page
     .getByRole("textbox", { name: "Cari plat atau pengemudi" })
     .fill("B 9821 KCE");
@@ -112,6 +111,7 @@ test("finance, health, management, notifications and logout are reachable", asyn
   page,
 }) => {
   for (const [link, title] of [
+    ["Live tracking", "Live tracking"],
     ["Keselamatan armada", "Keselamatan armada"],
     ["Sewa-Beli", "Sewa-Beli"],
     ["Data armada", "Data armada"],
@@ -136,6 +136,7 @@ test("mobile layout has no horizontal page overflow and navigation works", async
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/dashboard/tracking");
   await expect(
     page.getByRole("button", { name: "Buka navigasi" }),
   ).toBeVisible();
@@ -708,6 +709,8 @@ test("registration supports validation, private profiles, logout and credential 
   await page
     .getByRole("button", { name: "Keluar dari akun", exact: true })
     .click();
+  await page.waitForURL("**/login");
+  await page.waitForLoadState("load");
   await page.getByLabel("Email operator", { exact: true }).fill(email);
   await page
     .getByLabel("Kata sandi", { exact: true })
