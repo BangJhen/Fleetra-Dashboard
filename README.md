@@ -86,6 +86,27 @@ Dashboard menyediakan RESTful API berbasis Next.js App Router untuk konsol web d
 
 ## Panduan Menjalankan Sistem
 
+### Menjalankan dengan Docker
+
+Persyaratan: Docker Desktop (atau Docker Engine) dengan Docker Compose.
+
+```bash
+docker compose up --build -d
+```
+
+Dashboard tersedia di http://localhost:3000. Untuk membukanya dari perangkat lain di jaringan yang sama, gunakan alamat IP komputer yang menjalankan Docker, misalnya `http://192.168.1.10:3000`, dan izinkan port 3000 pada firewall jika diperlukan.
+
+Data aplikasi disimpan di volume Docker `fleetra_data` agar tetap ada setelah container dimulai ulang. Untuk melihat log atau menghentikan aplikasi:
+
+```bash
+docker compose logs -f dashboard
+docker compose down
+```
+
+Docker menjalankan dashboard dengan penyimpanan file lokal; konfigurasi MariaDB tetap opsional dan tidak disertakan dalam Compose ini.
+
+### Menjalankan tanpa Docker
+
 Persyaratan:
 - Node.js versi 22 atau lebih baru
 - npm versi 10 atau lebih baru
