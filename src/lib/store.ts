@@ -33,7 +33,13 @@ async function read(): Promise<FleetState> {
     return state;
   } catch (e) {
     if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw e;
-    const s = createSeed();
+    let s: FleetState;
+    try {
+      const seedFile = path.resolve(process.cwd(), "database/seed-state.json");
+      s = JSON.parse(await readFile(seedFile, "utf8")) as FleetState;
+    } catch {
+      s = createSeed();
+    }
     captureSafety(s, "baseline");
     await save(s);
     return s;

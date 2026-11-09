@@ -1,4 +1,24 @@
 services:
+  db:
+    image: mariadb:11.7
+    container_name: fleetra-db
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=fleetra_root_password
+      - MYSQL_DATABASE=fleetra
+      - MYSQL_USER=fleetra_app
+      - MYSQL_PASSWORD=fleetra_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./database/fleetra_dump.sql:/docker-entrypoint-initdb.d/01_fleetra_dump.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   dashboard:
     build:
       context: .
@@ -11,11 +31,20 @@ services:
       - NODE_ENV=production
       - HOSTNAME=0.0.0.0
       - PORT=3000
-      - FLEETRA_DATA_BACKEND=file
-      - FLEETRA_DATA_DIR=/app/.data
+      - FLEETRA_DATA_BACKEND=mysql
+      - FLEETRA_DB_HOST=db
+      - FLEETRA_DB_PORT=3306
+      - FLEETRA_DB_USER=fleetra_app
+      - FLEETRA_DB_PASSWORD=fleetra_password
+      - FLEETRA_DB_NAME=fleetra
+    depends_on:
+      db:
+        condition: service_healthy
     volumes:
       - fleetra_data:/app/.data
 
 volumes:
+  mariadb_data:
+    driver: local
   fleetra_data:
     driver: local

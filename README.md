@@ -108,15 +108,33 @@ Aplikasi web dapat diakses melalui peramban pada alamat http://localhost:3000. U
 - Email: manager@fleetra.demo
 - Kata Sandi: Fleetra2026!
 
+### Manajemen Basis Data & Seed Dummy
+
+Untuk memastikan sistem dapat langsung dijalankan di mesin lain tanpa kehilangan data:
+
+1. **Inisialisasi Database Otomatis:**
+   ```bash
+   npm run db:init
+   ```
+   Skrip ini secara cerdas mendeteksi:
+   - Jika MariaDB/MySQL aktif: Mengimpor skema (`database/fleetra_dump.sql`) dan seluruh data 144 armada, 144 driver, 158 trip, 20 lokasi, serta akun pengguna.
+   - Jika MySQL tidak aktif / mode file: Menginisialisasi `.data/fleetra.json` dari `database/seed-state.json`.
+
+2. **Ekspor Cadangan Terkini (Dump):**
+   ```bash
+   npm run db:dump
+   ```
+   Memperbarui `database/fleetra_dump.sql` dan `database/seed-state.json` dengan data operasional termutakhir dari database lokal.
+
 ### Menjalankan dengan Docker Container (Cross-Platform)
 
-Sistem FLEETRA Dashboard telah ter-kontainerisasi secara penuh menggunakan Docker multi-stage build:
+Sistem FLEETRA Dashboard telah ter-kontainerisasi penuh dengan dukungan database MariaDB otomatis:
 
 1. **Menjalankan via Docker Compose:**
 ```bash
 docker compose up -d --build
 ```
-Aplikasi web langsung aktif di `http://localhost:3000`.
+Docker Compose akan secara otomatis menjalankan kontainer database MariaDB (`fleetra-db`), mengimpor skema & dummy seed dari `database/fleetra_dump.sql`, dan menyalakan `fleetra-dashboard` di `http://localhost:3000`.
 
 2. **Melihat status kontainer:**
 ```bash
