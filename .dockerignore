@@ -1,0 +1,14 @@
+node_modules
+.next
+.next-dev
+.next-qa
+.git
+.gitignore
+*.log
+.DS_Store
+tests
+docs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.data/*.cnf

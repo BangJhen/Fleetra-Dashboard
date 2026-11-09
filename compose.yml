@@ -1,0 +1,21 @@
+services:
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fleetra-dashboard
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - HOSTNAME=0.0.0.0
+      - PORT=3000
+      - FLEETRA_DATA_BACKEND=file
+      - FLEETRA_DATA_DIR=/app/.data
+    volumes:
+      - fleetra_data:/app/.data
+
+volumes:
+  fleetra_data:
+    driver: local

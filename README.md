@@ -108,6 +108,27 @@ Aplikasi web dapat diakses melalui peramban pada alamat http://localhost:3000. U
 - Email: manager@fleetra.demo
 - Kata Sandi: Fleetra2026!
 
+### Menjalankan dengan Docker Container (Cross-Platform)
+
+Sistem FLEETRA Dashboard telah ter-kontainerisasi secara penuh menggunakan Docker multi-stage build:
+
+1. **Menjalankan via Docker Compose:**
+```bash
+docker compose up -d --build
+```
+Aplikasi web langsung aktif di `http://localhost:3000`.
+
+2. **Melihat status kontainer:**
+```bash
+docker compose ps
+docker compose logs -f dashboard
+```
+
+3. **Menghentikan kontainer:**
+```bash
+docker compose down
+```
+
 Pengujian dan Pemeriksaan Kode:
 
 ```bash

@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
+  output: "standalone",
   devIndicators: false,
   distDir: process.env.FLEETRA_TEST_SERVER === "1"
     ? ".next-qa"
